@@ -14,8 +14,9 @@ const router = express_1.Router();
 router.post('/message', (req, res) => {
     message_model_1.Message.createMessageFromJson(req.body)
         .then(message => {
-        BitmovinService.createEncoding(message);
-        res.status(200).send(message);
+        BitmovinService.createEncoding(message).then((message) => {
+            res.status(200).send(message);
+        });
     })
         .catch(err => res.status(400).send(err));
 });

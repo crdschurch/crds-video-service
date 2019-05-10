@@ -1,6 +1,7 @@
 import Bitmovin from "bitmovin-javascript";
 import { Message } from "../models/message.model";
 import * as codecList from "./bitmovin.codec";
+import { updateContentfulRecord } from "./contentful.service";
 
 const bitmovin = Bitmovin({
   'apiKey': process.env['BITMOVIN_API_KEY'] as string
@@ -10,7 +11,7 @@ const INPUT_FILE_HOST = process.env.INPUT_FILE_HOST;
 const INPUT = process.env.BITMOVIN_INPUT_ID;
 const OUTPUT = process.env.BITMOVIN_OUTPUT_ID;
 
-async function start(message: Message)  {
+async function start(message: Message) {
 
   const inputPath = message.videoUrl.replace(INPUT_FILE_HOST, '');
 
@@ -51,7 +52,7 @@ async function start(message: Message)  {
 
   const videoStreamConfigs = await Promise.all(videoStreamConfigsPromises);
   const audioStreamConfigs = await Promise.all(audioStreamConfigsPromises);
-  
+
   const videoMuxingConfigsPromises = videoStreamConfigs
     .map(videoStreamConfig => {
       var videoMuxingConfig = {
@@ -70,7 +71,7 @@ async function start(message: Message)  {
       };
       return bitmovin.encoding.encodings(encoding.id).muxings.ts.add(videoMuxingConfig);
     })
-  
+
   const audioMuxingConfigsPromises = audioStreamConfigs
     .map(audioStreamConfig => {
       var audioMuxingConfig = {
@@ -89,66 +90,64 @@ async function start(message: Message)  {
       };
       return bitmovin.encoding.encodings(encoding.id).muxings.ts.add(audioMuxingConfig);
     })
-  
-    const videoMuxingConfig = await Promise.all(videoMuxingConfigsPromises);
-    const audioMuxingConfig = await Promise.all(audioMuxingConfigsPromises);
 
-    await bitmovin.encoding.encodings(encoding.id).start({});
-    
-    await waitUntilEncodingFinished(encoding);
+  const videoMuxingConfigs = await Promise.all(videoMuxingConfigsPromises);
+  const audioMuxingConfigs = await Promise.all(audioMuxingConfigsPromises);
 
-    const manifestConfig = {
-      name: message.videoId + "_manifest",
-      manifestName: 'manifest.m3u8',
-      outputs: [{
-        outputId: OUTPUT,
-        outputPath: outputPath,
-        acl: [{
-          permission: 'PUBLIC_READ'
-        }]
+  await bitmovin.encoding.encodings(encoding.id).start({});
+
+  await waitUntilEncodingFinished(encoding);
+
+  const manifestConfig = {
+    name: message.videoId + "_manifest",
+    manifestName: 'manifest.m3u8',
+    outputs: [{
+      outputId: OUTPUT,
+      outputPath: outputPath,
+      acl: [{
+        permission: 'PUBLIC_READ'
       }]
-    }
+    }]
+  }
 
-    const manifest = await bitmovin.encoding.manifests.hls.create(manifestConfig);
+  const manifest = await bitmovin.encoding.manifests.hls.create(manifestConfig);
 
-    const audioManifest = audioMuxingConfig
-      .map(audioMuxingConfig => {
-        var audioMedia = {
-          name: 'audio',
-          groupId: 'audio_group',
-          segmentPath: 'audio/' + audioMuxingConfig.streams[0].streamId,
-          uri: audioMuxingConfig.streams[0].streamId + 'audiomedia.m3u8',
-          encodingId: encoding.id,
-          streamId: audioMuxingConfig.streams[0].streamId,
-          muxingId: audioMuxingConfig.id,
-          language: 'en'
-        }
+  const audioManifest = audioMuxingConfigs
+    .map(audioMuxingConfig => {
+      var audioMedia = {
+        name: 'audio',
+        groupId: 'audio_group',
+        segmentPath: 'audio/' + audioMuxingConfig.streams[0].streamId,
+        uri: '/audiomedia.m3u8',
+        encodingId: encoding.id,
+        streamId: audioMuxingConfig.streams[0].streamId,
+        muxingId: audioMuxingConfig.id,
+        language: 'en'
+      }
 
-        return bitmovin.encoding.manifests.hls(manifest.id).media.audio.add(audioMedia);
-      })
+      return bitmovin.encoding.manifests.hls(manifest.id).media.audio.add(audioMedia);
+    })
 
-    const videoManifest = videoMuxingConfig
-      .map(videoMuxingConfig => {
-        var variantStream = {
-          audio: 'audio_group',
-          closedCaptions: 'NONE',
-          segmentPath: 'video/' + videoMuxingConfig.streams[0].streamId,
-          uri: videoMuxingConfig.streams[0].streamId + 'video.m3u8',
-          encodingId: encoding.id,
-          streamId: videoMuxingConfig.streams[0].streamId,
-          muxingId: videoMuxingConfig.id
-        }
-        return bitmovin.encoding.manifests.hls(manifest.id).streams.add(variantStream);
-      })
+  const videoManifest = videoMuxingConfigs
+    .map(videoMuxingConfig => {
+      var variantStream = {
+        audio: 'audio_group',
+        closedCaptions: 'NONE',
+        segmentPath: 'video/' + videoMuxingConfig.streams[0].streamId,
+        uri: '/video.m3u8',
+        encodingId: encoding.id,
+        streamId: videoMuxingConfig.streams[0].streamId,
+        muxingId: videoMuxingConfig.id
+      }
+      return bitmovin.encoding.manifests.hls(manifest.id).streams.add(variantStream);
+    })
 
-    await Promise.all(audioManifest);
-    await Promise.all(videoManifest);
+  await Promise.all(audioManifest);
+  await Promise.all(videoManifest);
 
-    await bitmovin.encoding.manifests.hls(manifest.id).start();
-    
-    await waitUntilHlsManifestFinished(manifest);
-    
-    console.log(`Encoding for ${message.id} complete!`);
+  await bitmovin.encoding.manifests.hls(manifest.id).start();
+
+  await waitUntilHlsManifestFinished(manifest);
 }
 
 const waitUntilEncodingFinished = encoding => {
@@ -200,12 +199,22 @@ const waitUntilHlsManifestFinished = manifest => {
     waitForManifestToBeFinished();
   });
 };
-  
 
-export function createEncoding(message: Message){
-  start(message).catch(e => {
-    console.log(e.message)
-  });
+
+export async function createEncoding(message: Message) {
+  const encodings = await getAllEncodings();
+  if (!encodings.find(encoding => encoding.name === message.videoId)) {
+    try {
+      console.log("would've started encoding");
+      // await start(message)
+    } catch (err) {
+      console.log(err);
+    }
+  } else {
+    console.log(`Encoding for ${message.videoId} already exists!`);
+  }
+  
+  return updateContentfulRecord(message.id, message.videoId);
 }
 
 export function getAllEncodings(): Promise<any[]> {

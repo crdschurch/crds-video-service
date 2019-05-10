@@ -7,8 +7,9 @@ const router: Router = Router();
 router.post('/message', (req: Request, res: Response) => {
   Message.createMessageFromJson(req.body)
     .then(message => {
-      BitmovinService.createEncoding(message);
-      res.status(200).send(message);
+      BitmovinService.createEncoding(message).then((message) => {
+        res.status(200).send(message);
+      })
     })
     .catch(err => res.status(400).send(err))
     });

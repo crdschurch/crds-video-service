@@ -12,6 +12,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const bitmovin_javascript_1 = __importDefault(require("bitmovin-javascript"));
 const codecList = __importStar(require("./bitmovin.codec"));
+const contentful_service_1 = require("./contentful.service");
 const bitmovin = bitmovin_javascript_1.default({
     'apiKey': process.env['BITMOVIN_API_KEY']
 });
@@ -89,8 +90,8 @@ async function start(message) {
         };
         return bitmovin.encoding.encodings(encoding.id).muxings.ts.add(audioMuxingConfig);
     });
-    const videoMuxingConfig = await Promise.all(videoMuxingConfigsPromises);
-    const audioMuxingConfig = await Promise.all(audioMuxingConfigsPromises);
+    const videoMuxingConfigs = await Promise.all(videoMuxingConfigsPromises);
+    const audioMuxingConfigs = await Promise.all(audioMuxingConfigsPromises);
     await bitmovin.encoding.encodings(encoding.id).start({});
     await waitUntilEncodingFinished(encoding);
     const manifestConfig = {
@@ -105,13 +106,13 @@ async function start(message) {
             }]
     };
     const manifest = await bitmovin.encoding.manifests.hls.create(manifestConfig);
-    const audioManifest = audioMuxingConfig
+    const audioManifest = audioMuxingConfigs
         .map(audioMuxingConfig => {
         var audioMedia = {
             name: 'audio',
             groupId: 'audio_group',
             segmentPath: 'audio/' + audioMuxingConfig.streams[0].streamId,
-            uri: audioMuxingConfig.streams[0].streamId + 'audiomedia.m3u8',
+            uri: '/audiomedia.m3u8',
             encodingId: encoding.id,
             streamId: audioMuxingConfig.streams[0].streamId,
             muxingId: audioMuxingConfig.id,
@@ -119,13 +120,13 @@ async function start(message) {
         };
         return bitmovin.encoding.manifests.hls(manifest.id).media.audio.add(audioMedia);
     });
-    const videoManifest = videoMuxingConfig
+    const videoManifest = videoMuxingConfigs
         .map(videoMuxingConfig => {
         var variantStream = {
             audio: 'audio_group',
             closedCaptions: 'NONE',
             segmentPath: 'video/' + videoMuxingConfig.streams[0].streamId,
-            uri: videoMuxingConfig.streams[0].streamId + 'video.m3u8',
+            uri: '/video.m3u8',
             encodingId: encoding.id,
             streamId: videoMuxingConfig.streams[0].streamId,
             muxingId: videoMuxingConfig.id
@@ -136,7 +137,6 @@ async function start(message) {
     await Promise.all(videoManifest);
     await bitmovin.encoding.manifests.hls(manifest.id).start();
     await waitUntilHlsManifestFinished(manifest);
-    console.log(`Encoding for ${message.id} complete!`);
 }
 const waitUntilEncodingFinished = encoding => {
     return new Promise((resolve, reject) => {
@@ -180,10 +180,21 @@ const waitUntilHlsManifestFinished = manifest => {
         waitForManifestToBeFinished();
     });
 };
-function createEncoding(message) {
-    start(message).catch(e => {
-        console.log(e.message);
-    });
+async function createEncoding(message) {
+    const encodings = await getAllEncodings();
+    if (!encodings.find(encoding => encoding.name === message.videoId)) {
+        try {
+            console.log("would've started encoding");
+            // await start(message)
+        }
+        catch (err) {
+            console.log(err);
+        }
+    }
+    else {
+        console.log(`Encoding for ${message.videoId} already exists!`);
+    }
+    return contentful_service_1.updateContentfulRecord(message.id, message.videoId);
 }
 exports.createEncoding = createEncoding;
 function getAllEncodings() {
