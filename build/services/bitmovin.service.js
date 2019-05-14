@@ -14,7 +14,7 @@ const bitmovin_javascript_1 = __importDefault(require("bitmovin-javascript"));
 const codecList = __importStar(require("./bitmovin.codec"));
 const contentful_service_1 = require("./contentful.service");
 const bitmovin = bitmovin_javascript_1.default({
-    'apiKey': process.env['BITMOVIN_API_KEY']
+    'apiKey': process.env.BITMOVIN_API_KEY
 });
 const INPUT_FILE_HOST = process.env.INPUT_FILE_HOST;
 const INPUT = process.env.BITMOVIN_INPUT_ID;
@@ -48,8 +48,8 @@ async function startEncoding(message) {
             }]
     };
     const manifest = await bitmovin.encoding.manifests.hls.create(manifestConfig);
-    var testing = await Promise.all(await createAudioManifest(audioMuxingConfigs, encoding, manifest));
-    var testing2 = await Promise.all(await createVideoManifest(videoMuxingConfigs, encoding, manifest));
+    await Promise.all(await createAudioManifest(audioMuxingConfigs, encoding, manifest));
+    await Promise.all(await createVideoManifest(videoMuxingConfigs, encoding, manifest));
     await bitmovin.encoding.manifests.hls(manifest.id).start();
     await waitUntilHlsManifestFinished(manifest);
 }
