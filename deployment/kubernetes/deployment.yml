@@ -1,13 +1,13 @@
 apiVersion: apps/v1
 kind: Deployment 
 metadata: 
-  name: crds-video-service
+  name: crds-video
   namespace: api
 spec: 
   replicas: 2
   selector:
     matchLabels:
-      app: crds-video-service
+      app: crds-video
   strategy: 
     type: RollingUpdate 
     rollingUpdate: 
@@ -16,10 +16,10 @@ spec:
   template: 
     metadata: 
       labels: 
-        app: crds-video-service
+        app: crds-video
     spec: 
       containers: 
-        - name: crds-video-service
+        - name: crds-video
           image: crdschurch/crds-video-service:$DOCKER_TAG 
           imagePullPolicy: Always 
           ports: 
@@ -48,19 +48,19 @@ spec:
               value: $CONTENTFUL_MANAGEMENT_TOKEN
             - name: CONTENTFUL_ACCESS_TOKEN
               value: $CONTENTFUL_ACCESS_TOKEN
-            - name: ALGOLIA_APP_ID
-              value: $ALGOLIA_APP_ID
-            - name: ALGOLIA_API_KEY
-              value: $ALGOLIA_API_KEY
-            - name: ALGOLIA_INDEX_NAME
-              value: $ALGOLIA_INDEX_NAME
-            - name: CRDS_MEDIA_ENDPOINT
-              value: $CRDS_MEDIA_ENDPOINT
-            - name: CRDS_CLIENT_ENDPOINT
-              value: $CRDS_CLIENT_ENDPOINT
-            - name: LOGZ_IO_KEY
-              value: $LOGZ_IO_KEY
-            - name: APP_NAME
-              value: $APP_NAME
-            - name: ENV
-              value: $ENV
+            - name: LOGZIO_API_TOKEN
+              value: $LOGZIO_API_TOKEN
+            - name: CRDS_ENV
+              value: $CRDS_ENV
+            - name: BITMOVIN_API_KEY
+              value: $BITMOVIN_API_KEY
+            - name: BITMOVIN_INPUT_ID
+              value: $BITMOVIN_INPUT_ID
+            - name: BITMOVIN_OUTPUT_ID
+              value: $BITMOVIN_OUTPUT_ID
+            - name: CLOUDFRONT_DOMAIN
+              value: $CLOUDFRONT_DOMAIN
+            - name: CLOUD_REGION
+              value: $CLOUD_REGION
+            - name: INPUT_FILE_HOST
+              value: $INPUT_FILE_HOST
