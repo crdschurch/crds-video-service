@@ -32,11 +32,8 @@ function updateContentfulRecord(entryId, assetId) {
         .then((environment) => environment.getEntry(entryId))
         .then((entry) => {
         entry.fields.bitmovin_url = { 'en-US': bitmovinUrl };
-        return entry.update().then((entry) => entry.publish());
-    })
-        .then((entry) => {
         console.log(`Entry ${entry.sys.id} bitmovin url updated to ${bitmovinUrl}`);
-        return entry;
+        return entry.update().then((entry) => entry.publish());
     })
         .catch(console.error);
 }
