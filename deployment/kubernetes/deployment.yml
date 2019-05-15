@@ -64,3 +64,9 @@ spec:
               value: $CLOUD_REGION
             - name: INPUT_FILE_HOST
               value: $INPUT_FILE_HOST
+            - name: NEW_RELIC_LICENSE_KEY            
+              value: $NR_INSTALL_KEY
+            - name: NEW_RELIC_APP_NAME
+              value: $NR_APP_NAME
+            - name: NEW_RELIC_DISTRIBUTED_TRACING_ENABLED
+              value: $NEW_RELIC_DISTRIBUTED_TRACING_ENABLED
