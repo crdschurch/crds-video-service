@@ -69,11 +69,14 @@ async function createEncoding(message) {
     return contentful_service_1.updateContentfulRecord(message.id, message.videoId);
 }
 exports.createEncoding = createEncoding;
-function getAllEncodings() {
-    return bitmovin.encoding.encodings.list(100, 0)
+function getAllEncodings(encodings = [], offset = 0) {
+    return bitmovin.encoding.encodings.list(100, offset)
         .then(result => {
         const { items } = result;
-        return items;
+        encodings = [...encodings, ...items];
+        if (items.length !== 2)
+            return encodings;
+        return getAllEncodings(encodings, offset + 100);
     });
 }
 exports.getAllEncodings = getAllEncodings;
@@ -152,7 +155,7 @@ async function createAudioManifest(audioMuxingConfigs, encoding, manifest) {
             name: 'audio',
             groupId: 'audio_group',
             segmentPath: 'audio/' + audioMuxingConfig.streams[0].streamId + '/',
-            uri: `audiomedia${audioMuxingConfig.streams[0].streamI}.m3u8`,
+            uri: `audiomedia${audioMuxingConfig.streams[0].streamId}.m3u8`,
             encodingId: encoding.id,
             streamId: audioMuxingConfig.streams[0].streamId,
             muxingId: audioMuxingConfig.id,

@@ -17,23 +17,6 @@ const client = contentful.createClient({
 const managementClient = contentfulManagement.createClient({
     accessToken: process.env.CONTENTFUL_MANAGEMENT_TOKEN
 });
-function getEntries(filters, entries, skip) {
-    var params = {
-        skip: skip,
-        limit: 1000,
-        include: 2,
-    };
-    Object.assign(params, filters);
-    return client.getEntries(params)
-        .then((response) => {
-        entries = [...entries, ...response.items];
-        if (response.items.length !== 1000)
-            return entries;
-        return getEntries(filters, entries, skip + 1000);
-    })
-        .catch((ex) => { throw ex; });
-}
-exports.getEntries = getEntries;
 function getAssetUrl(videoId) {
     return client.getAsset(videoId)
         .then(asset => {

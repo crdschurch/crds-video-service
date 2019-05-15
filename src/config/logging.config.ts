@@ -16,11 +16,10 @@ function log(req: express.Request, res: express.Response, next: express.NextFunc
   else
     log.level = 'info';
   
-  log.message = `Request: ${req.method} ${req.originalUrl}`;
-  log.message += `\nResponse: ${res.statusCode} ${res.statusMessage}`;
+  log.message += `Request: ${req.method} ${req.originalUrl}`;
   
-  if(req.originalUrl == '/'){
-    log.message = "Status Page loaded"
+  if(req.originalUrl == "/encode/message"){
+    log.message += `${req.body}`
   }
 
   logger.log(log);

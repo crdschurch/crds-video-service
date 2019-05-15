@@ -14,10 +14,9 @@ function log(req, res, next) {
         log.level = 'error';
     else
         log.level = 'info';
-    log.message = `Request: ${req.method} ${req.originalUrl}`;
-    log.message += `\nResponse: ${res.statusCode} ${res.statusMessage}`;
-    if (req.originalUrl == '/') {
-        log.message = "Status Page loaded";
+    log.message += `Request: ${req.method} ${req.originalUrl}`;
+    if (req.originalUrl == "/encode/message") {
+        log.message += `${req.body}`;
     }
     logger.log(log);
     next();

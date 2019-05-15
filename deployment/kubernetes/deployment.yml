@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment 
+metadata: 
+  name: crds-video-service
+  namespace: api
+spec: 
+  replicas: 2
+  selector:
+    matchLabels:
+      app: crds-video-service
+  strategy: 
+    type: RollingUpdate 
+    rollingUpdate: 
+      maxSurge: 2
+      maxUnavailable: 0
+  template: 
+    metadata: 
+      labels: 
+        app: crds-video-service
+    spec: 
+      containers: 
+        - name: crds-video-service
+          image: crdschurch/crds-video-service:$DOCKER_TAG 
+          imagePullPolicy: Always 
+          ports: 
+            - containerPort: 80 
+          resources: 
+            limits: 
+              memory: "2Gi"
+              cpu: "700m" 
+            requests: 
+              memory: "16Mi" 
+              cpu: "100m" 
+          readinessProbe:
+            httpGet:
+              path: /health/status
+              port: 3000
+            initialDelaySeconds: 1
+            timeoutSeconds: 3
+            successThreshold: 1
+            periodSeconds: 3
+          env:
+            - name: CONTENTFUL_SPACE_ID
+              value: $CONTENTFUL_SPACE_ID
+            - name: CONTENTFUL_ENV
+              value: $CONTENTFUL_ENV
+            - name: CONTENTFUL_MANAGEMENT_TOKEN
+              value: $CONTENTFUL_MANAGEMENT_TOKEN
+            - name: CONTENTFUL_ACCESS_TOKEN
+              value: $CONTENTFUL_ACCESS_TOKEN
+            - name: ALGOLIA_APP_ID
+              value: $ALGOLIA_APP_ID
+            - name: ALGOLIA_API_KEY
+              value: $ALGOLIA_API_KEY
+            - name: ALGOLIA_INDEX_NAME
+              value: $ALGOLIA_INDEX_NAME
+            - name: CRDS_MEDIA_ENDPOINT
+              value: $CRDS_MEDIA_ENDPOINT
+            - name: CRDS_CLIENT_ENDPOINT
+              value: $CRDS_CLIENT_ENDPOINT
+            - name: LOGZ_IO_KEY
+              value: $LOGZ_IO_KEY
+            - name: APP_NAME
+              value: $APP_NAME
+            - name: ENV
+              value: $ENV

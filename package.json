@@ -5,7 +5,8 @@
   "scripts": {
     "tsc": "tsc",
     "dev": "ts-node ./app.ts",
-    "serve": "rm -rf build/ && tsc && node build/app.js"
+    "serve-local": "rm -rf build/ && tsc && node build/app.js",
+    "start": "node build/app.js"
   },
   "dependencies": {
     "@types/express": "^4.16.1",
