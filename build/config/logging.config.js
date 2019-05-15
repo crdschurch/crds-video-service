@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 let logger = require('logzio-nodejs').createLogger({
-    token: process.env.LOGZIO_API_TOKEN,
+    token: process.env.LOGZIO_API_KEY,
 });
 function log(req, res, next) {
     var log = {
