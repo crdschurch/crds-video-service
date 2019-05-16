@@ -6,6 +6,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const body_parser_1 = __importDefault(require("body-parser"));
 const controllers_1 = require("./controllers");
+if (!process.env.CRDS_ENV.match('local')) {
+    require('newrelic');
+}
 const logging = require('./config/logging.config');
 const port = process.env.PORT || 3000;
 const app = express_1.default();

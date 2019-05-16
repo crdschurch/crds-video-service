@@ -1,6 +1,11 @@
 import express from "express";
 import bodyParser from "body-parser";
 import { BitmovinController, EncodeController, HealthController } from './controllers';
+
+if(!process.env.CRDS_ENV.match('local')) {
+  require ('newrelic');
+}
+
 const logging = require('./config/logging.config');
 const port = process.env.PORT || 3000;
 
