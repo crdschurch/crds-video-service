@@ -27,7 +27,7 @@ export function updateContentfulRecord(entryId, assetId){
     .then((space) => space.getEnvironment(process.env.CONTENTFUL_ENV))
     .then((environment) => environment.getEntry(entryId))
     .then((entry) => {
-      var entry_bitmovin_url: string = entry.fields.bitmovin_url['en-US'];
+      let entry_bitmovin_url: string = entry.fields.bitmovin_url ? entry.fields.bitmovin_url['en-US'] : '';
 
       // If the entry already has a matching URL do not publish it or we get stuck in an infinite loop with Contentful
       if(!entry_bitmovin_url.match(bitmovinUrl)){
