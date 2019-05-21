@@ -80,6 +80,16 @@ function getAllEncodings(encodings = [], offset = 0) {
     });
 }
 exports.getAllEncodings = getAllEncodings;
+async function getEncodingStreamDuration(encoding) {
+    let streams = await bitmovin.encoding.encodings(encoding.id).streams.list();
+    return await bitmovin.encoding.encodings(encoding.id)
+        .streams(streams.items[0].id)
+        .inputDetails()
+        .then((details) => {
+        return details.duration;
+    });
+}
+exports.getEncodingStreamDuration = getEncodingStreamDuration;
 async function createVideoStreamConfigs(encodingConfig, encoding) {
     return await codecList.videoCodecConfigurations
         .map(async (id) => {

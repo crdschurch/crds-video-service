@@ -16,5 +16,20 @@ router.get('/listEncodings', (req, res) => {
         res.send(encodings);
     });
 });
+router.get('/getAllEncodingDurations', (req, res) => {
+    bitmovinService.getAllEncodings()
+        .then((encodings) => {
+        Promise.all(encodings.map(encoding => {
+            return bitmovinService.getEncodingStreamDuration(encoding)
+                .then(duration => {
+                return {
+                    "id": encoding.name,
+                    "duration": duration
+                };
+            });
+        })).then(encodingDurations => res.send(encodingDurations));
+    })
+        .catch(err => console.log(err));
+});
 exports.BitmovinController = router;
 //# sourceMappingURL=bitmovin.controller.js.map
