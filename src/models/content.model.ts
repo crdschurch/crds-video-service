@@ -5,7 +5,7 @@ export interface Content {
 export class Content {
   id: string;
 
-  constructor(id: string){
+  constructor(id: string) {
     this.id = id;
   };
 }

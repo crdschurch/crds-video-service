@@ -5,9 +5,25 @@ const router: Router = Router();
 
 router.get('/listEncodings', (req: Request, res: Response) => {
   bitmovinService.getAllEncodings()
-  .then(encodings => {
-    res.send(encodings);
-  })
+    .then(encodings => {
+      res.send(encodings);
+    })
+})
+
+router.get('/getAllEncodingDurations', (req: Request, res: Response) => {
+  bitmovinService.getAllEncodings()
+    .then((encodings) => {
+      Promise.all(encodings.map(encoding => {
+        return bitmovinService.getEncodingStreamDuration(encoding)
+          .then(duration => {
+            return {
+              "id": encoding.name,
+              "duration": duration
+            }
+          })
+      })).then(encodingDurations => res.send(encodingDurations))
+    })
+    .catch(err => console.log(err));
 })
 
 export const BitmovinController: Router = router;

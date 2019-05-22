@@ -68,7 +68,7 @@ export async function createEncoding(message: Message) {
   } else {
     console.log(`Encoding for ${message.videoId} already exists!`);
   }
-  
+
   return updateContentfulRecord(message.id, message.videoId);
 }
 
@@ -77,8 +77,18 @@ export function getAllEncodings(encodings: any[] = [], offset: number = 0): Prom
     .then(result => {
       const { items } = result;
       encodings = [...encodings, ...items];
-      if(items.length !== 2) return encodings;
+      if (items.length !== 2) return encodings;
       return getAllEncodings(encodings, offset + 100);
+    });
+}
+
+export async function getEncodingStreamDuration(encoding) {
+  let streams = await bitmovin.encoding.encodings(encoding.id).streams.list();
+  return await bitmovin.encoding.encodings(encoding.id)
+    .streams(streams.items[0].id) // All streams (video or audio) will be the same length
+    .inputDetails()
+    .then((details: any) => {
+      return details.duration;
     });
 }
 
@@ -112,7 +122,7 @@ async function createAudioStreamConfigs(encodingConfig, encoding) {
     })
 }
 
-async function createVideoMuxingConfigs(encodingConfig, encoding, videoStreamConfigs){
+async function createVideoMuxingConfigs(encodingConfig, encoding, videoStreamConfigs) {
   return await videoStreamConfigs
     .map(videoStreamConfig => {
       var videoMuxingConfig = {
@@ -133,7 +143,7 @@ async function createVideoMuxingConfigs(encodingConfig, encoding, videoStreamCon
     })
 }
 
-async function createAudioMuxingConfigs(encodingConfig, encoding, audioStreamConfigs){
+async function createAudioMuxingConfigs(encodingConfig, encoding, audioStreamConfigs) {
   return await audioStreamConfigs
     .map(audioStreamConfig => {
       var audioMuxingConfig = {
@@ -154,25 +164,25 @@ async function createAudioMuxingConfigs(encodingConfig, encoding, audioStreamCon
     })
 }
 
-async function createAudioManifest(audioMuxingConfigs, encoding, manifest){
+async function createAudioManifest(audioMuxingConfigs, encoding, manifest) {
   return await audioMuxingConfigs
-  .map(audioMuxingConfig => {
-    var audioMedia = {
-      name: 'audio',
-      groupId: 'audio_group',
-      segmentPath: 'audio/' + audioMuxingConfig.streams[0].streamId + '/',
-      uri: `audiomedia${audioMuxingConfig.streams[0].streamId}.m3u8`,
-      encodingId: encoding.id,
-      streamId: audioMuxingConfig.streams[0].streamId,
-      muxingId: audioMuxingConfig.id,
-      language: 'en'
-    }
+    .map(audioMuxingConfig => {
+      var audioMedia = {
+        name: 'audio',
+        groupId: 'audio_group',
+        segmentPath: 'audio/' + audioMuxingConfig.streams[0].streamId + '/',
+        uri: `audiomedia${audioMuxingConfig.streams[0].streamId}.m3u8`,
+        encodingId: encoding.id,
+        streamId: audioMuxingConfig.streams[0].streamId,
+        muxingId: audioMuxingConfig.id,
+        language: 'en'
+      }
 
-    return bitmovin.encoding.manifests.hls(manifest.id).media.audio.add(audioMedia);
-  })
+      return bitmovin.encoding.manifests.hls(manifest.id).media.audio.add(audioMedia);
+    })
 }
 
-async function createVideoManifest(videoMuxingConfigs, encoding, manifest){
+async function createVideoManifest(videoMuxingConfigs, encoding, manifest) {
   return videoMuxingConfigs
     .map(videoMuxingConfig => {
       var variantStream = {

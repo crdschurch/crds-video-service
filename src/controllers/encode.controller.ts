@@ -12,6 +12,6 @@ router.post('/message', (req: Request, res: Response) => {
       })
     })
     .catch(err => res.status(400).send(err))
-    });
+});
 
 export const EncodeController: Router = router;
