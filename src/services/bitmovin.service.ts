@@ -35,11 +35,6 @@ async function startEncoding(message: Message) {
 
   await waitUntilEncodingFinished(encoding);
 
-
-  await createManifest(message, encodingConfig, audioMuxingConfigs, encoding, videoMuxingConfigs);
-}
-
-async function createManifest(message: Message, encodingConfig: { inputPath: string; segmentLength: number; segmentNaming: string; outputPath: string; }, audioMuxingConfigs: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}], encoding: any, videoMuxingConfigs: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}]) {
   const manifestConfig = {
     name: message.videoId + "_manifest",
     manifestName: 'manifest.m3u8',
@@ -51,6 +46,7 @@ async function createManifest(message: Message, encodingConfig: { inputPath: str
       }]
     }]
   };
+  
   const manifest = await bitmovin.encoding.manifests.hls.create(manifestConfig);
   await addSubtitles(manifest, message);
   await Promise.all(await createAudioManifest(audioMuxingConfigs, encoding, manifest));
@@ -58,6 +54,7 @@ async function createManifest(message: Message, encodingConfig: { inputPath: str
   await bitmovin.encoding.manifests.hls(manifest.id).start();
   await waitUntilHlsManifestFinished(manifest);
 }
+
 
 export async function createEncoding(message: Message) {
   const encodings = await getAllEncodings();
