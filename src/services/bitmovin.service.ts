@@ -35,6 +35,11 @@ async function startEncoding(message: Message) {
 
   await waitUntilEncodingFinished(encoding);
 
+
+  await createManifest(message, encodingConfig, audioMuxingConfigs, encoding, videoMuxingConfigs);
+}
+
+async function createManifest(message: Message, encodingConfig: { inputPath: string; segmentLength: number; segmentNaming: string; outputPath: string; }, audioMuxingConfigs: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}], encoding: any, videoMuxingConfigs: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}]) {
   const manifestConfig = {
     name: message.videoId + "_manifest",
     manifestName: 'manifest.m3u8',
@@ -45,27 +50,29 @@ async function startEncoding(message: Message) {
         permission: 'PUBLIC_READ'
       }]
     }]
-  }
-
+  };
   const manifest = await bitmovin.encoding.manifests.hls.create(manifestConfig);
-
+  await addSubtitles(manifest, message);
   await Promise.all(await createAudioManifest(audioMuxingConfigs, encoding, manifest));
   await Promise.all(await createVideoManifest(videoMuxingConfigs, encoding, manifest));
-
   await bitmovin.encoding.manifests.hls(manifest.id).start();
-
   await waitUntilHlsManifestFinished(manifest);
 }
 
 export async function createEncoding(message: Message) {
   const encodings = await getAllEncodings();
-  if (!encodings.find(encoding => encoding.name === message.videoId)) {
+  const encoding = encodings.find(encoding => encoding.name === message.videoId);
+  if (!encoding) {
     try {
       await startEncoding(message)
     } catch (err) {
       console.log(err);
     }
   } else {
+    const hlsManifests = await bitmovin.encoding.manifests.hls.list();
+    const hlsManifest = hlsManifests.items.find(manifest => { return manifest.media.find(media => media.encodingId).encodingId === encoding.id })
+    if (!hlsManifest.media.find(media => media.type == "VTT"))
+      await addSubtitles(hlsManifest, message);
     console.log(`Encoding for ${message.videoId} already exists!`);
   }
 
@@ -187,6 +194,7 @@ async function createVideoManifest(videoMuxingConfigs, encoding, manifest) {
     .map(videoMuxingConfig => {
       var variantStream = {
         audio: 'audio_group',
+        subtitles: 'subtitles_group',
         closedCaptions: 'NONE',
         segmentPath: 'video/' + videoMuxingConfig.streams[0].streamId + '/',
         uri: `video${videoMuxingConfig.streams[0].streamId}.m3u8`,
@@ -247,3 +255,28 @@ const waitUntilHlsManifestFinished = manifest => {
     waitForManifestToBeFinished();
   });
 };
+
+const createHlsVttMedia = (hlsManifest, vttUrl) => {
+  return new Promise((resolve, reject) => {
+    const vttMedia = {
+      name: 'en',
+      groupId: 'subtitles_group',
+      language: 'en',
+      vttUrl,
+      uri: 'vtt_media.m3u8'
+    };
+
+    bitmovin.encoding.manifests
+      .hls(hlsManifest.id)
+      .media.vtt.add(vttMedia)
+      .then(createdVttMedia => {
+        console.log('Successfully created HLS VTT Media', createdVttMedia);
+        resolve(createdVttMedia);
+      })
+  });
+};
+
+async function addSubtitles(manifest, message) {
+  if (!message.transcriptionUrl) return;
+  return createHlsVttMedia(manifest, `http:${message.transcriptionUrl}`);
+}
