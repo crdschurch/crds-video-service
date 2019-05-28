@@ -275,5 +275,5 @@ const createHlsVttMedia = (hlsManifest, vttUrl) => {
 
 async function addSubtitles(manifest, message) {
   if (!message.transcriptionUrl) return;
-  return createHlsVttMedia(manifest, `http:${message.transcriptionUrl}`);
+  return createHlsVttMedia(manifest, `https:${message.transcriptionUrl}`);
 }
