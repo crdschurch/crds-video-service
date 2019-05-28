@@ -45,30 +45,34 @@ async function startEncoding(message: Message) {
         permission: 'PUBLIC_READ'
       }]
     }]
-  }
-
+  };
+  
   const manifest = await bitmovin.encoding.manifests.hls.create(manifestConfig);
-
+  await addSubtitles(manifest, message);
   await Promise.all(await createAudioManifest(audioMuxingConfigs, encoding, manifest));
   await Promise.all(await createVideoManifest(videoMuxingConfigs, encoding, manifest));
-
   await bitmovin.encoding.manifests.hls(manifest.id).start();
-
   await waitUntilHlsManifestFinished(manifest);
 }
 
+
 export async function createEncoding(message: Message) {
   const encodings = await getAllEncodings();
-  if (!encodings.find(encoding => encoding.name === message.videoId)) {
+  const encoding = encodings.find(encoding => encoding.name === message.videoId);
+  if (!encoding) {
     try {
       await startEncoding(message)
     } catch (err) {
       console.log(err);
     }
   } else {
+    const hlsManifests = await bitmovin.encoding.manifests.hls.list();
+    const hlsManifest = hlsManifests.items.find(manifest => { return manifest.media.find(media => media.encodingId).encodingId === encoding.id })
+    if (!hlsManifest.media.find(media => media.type == "VTT"))
+      await addSubtitles(hlsManifest, message);
     console.log(`Encoding for ${message.videoId} already exists!`);
   }
-  
+
   return updateContentfulRecord(message.id, message.videoId);
 }
 
@@ -77,8 +81,18 @@ export function getAllEncodings(encodings: any[] = [], offset: number = 0): Prom
     .then(result => {
       const { items } = result;
       encodings = [...encodings, ...items];
-      if(items.length !== 2) return encodings;
+      if (items.length !== 2) return encodings;
       return getAllEncodings(encodings, offset + 100);
+    });
+}
+
+export async function getEncodingStreamDuration(encoding) {
+  let streams = await bitmovin.encoding.encodings(encoding.id).streams.list();
+  return await bitmovin.encoding.encodings(encoding.id)
+    .streams(streams.items[0].id) // All streams (video or audio) will be the same length
+    .inputDetails()
+    .then((details: any) => {
+      return details.duration;
     });
 }
 
@@ -112,7 +126,7 @@ async function createAudioStreamConfigs(encodingConfig, encoding) {
     })
 }
 
-async function createVideoMuxingConfigs(encodingConfig, encoding, videoStreamConfigs){
+async function createVideoMuxingConfigs(encodingConfig, encoding, videoStreamConfigs) {
   return await videoStreamConfigs
     .map(videoStreamConfig => {
       var videoMuxingConfig = {
@@ -133,7 +147,7 @@ async function createVideoMuxingConfigs(encodingConfig, encoding, videoStreamCon
     })
 }
 
-async function createAudioMuxingConfigs(encodingConfig, encoding, audioStreamConfigs){
+async function createAudioMuxingConfigs(encodingConfig, encoding, audioStreamConfigs) {
   return await audioStreamConfigs
     .map(audioStreamConfig => {
       var audioMuxingConfig = {
@@ -154,29 +168,30 @@ async function createAudioMuxingConfigs(encodingConfig, encoding, audioStreamCon
     })
 }
 
-async function createAudioManifest(audioMuxingConfigs, encoding, manifest){
+async function createAudioManifest(audioMuxingConfigs, encoding, manifest) {
   return await audioMuxingConfigs
-  .map(audioMuxingConfig => {
-    var audioMedia = {
-      name: 'audio',
-      groupId: 'audio_group',
-      segmentPath: 'audio/' + audioMuxingConfig.streams[0].streamId + '/',
-      uri: `audiomedia${audioMuxingConfig.streams[0].streamId}.m3u8`,
-      encodingId: encoding.id,
-      streamId: audioMuxingConfig.streams[0].streamId,
-      muxingId: audioMuxingConfig.id,
-      language: 'en'
-    }
+    .map(audioMuxingConfig => {
+      var audioMedia = {
+        name: 'audio',
+        groupId: 'audio_group',
+        segmentPath: 'audio/' + audioMuxingConfig.streams[0].streamId + '/',
+        uri: `audiomedia${audioMuxingConfig.streams[0].streamId}.m3u8`,
+        encodingId: encoding.id,
+        streamId: audioMuxingConfig.streams[0].streamId,
+        muxingId: audioMuxingConfig.id,
+        language: 'en'
+      }
 
-    return bitmovin.encoding.manifests.hls(manifest.id).media.audio.add(audioMedia);
-  })
+      return bitmovin.encoding.manifests.hls(manifest.id).media.audio.add(audioMedia);
+    })
 }
 
-async function createVideoManifest(videoMuxingConfigs, encoding, manifest){
+async function createVideoManifest(videoMuxingConfigs, encoding, manifest) {
   return videoMuxingConfigs
     .map(videoMuxingConfig => {
       var variantStream = {
         audio: 'audio_group',
+        subtitles: 'subtitles_group',
         closedCaptions: 'NONE',
         segmentPath: 'video/' + videoMuxingConfig.streams[0].streamId + '/',
         uri: `video${videoMuxingConfig.streams[0].streamId}.m3u8`,
@@ -237,3 +252,28 @@ const waitUntilHlsManifestFinished = manifest => {
     waitForManifestToBeFinished();
   });
 };
+
+const createHlsVttMedia = (hlsManifest, vttUrl) => {
+  return new Promise((resolve, reject) => {
+    const vttMedia = {
+      name: 'en',
+      groupId: 'subtitles_group',
+      language: 'en',
+      vttUrl,
+      uri: 'vtt_media.m3u8'
+    };
+
+    bitmovin.encoding.manifests
+      .hls(hlsManifest.id)
+      .media.vtt.add(vttMedia)
+      .then(createdVttMedia => {
+        console.log('Successfully created HLS VTT Media', createdVttMedia);
+        resolve(createdVttMedia);
+      })
+  });
+};
+
+async function addSubtitles(manifest, message) {
+  if (!message.transcriptionUrl) return;
+  return createHlsVttMedia(manifest, `http:${message.transcriptionUrl}`);
+}

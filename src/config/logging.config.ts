@@ -1,7 +1,7 @@
 import express from 'express';
 
 let logger = require('logzio-nodejs').createLogger({
-  token: process.env.LOGZIO_API_TOKEN,
+  token: process.env.LOGZIO_API_KEY,
 });
 
 function log(req: express.Request, res: express.Response, next: express.NextFunction) {

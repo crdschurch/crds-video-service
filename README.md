@@ -41,7 +41,7 @@ export CONTENTFUL_SPACE_ID=
 export CONTENTFUL_ENV=
 export CRDS_ENV=local
 export INPUT_FILE_HOST=
-export LOGZIO_API_TOKEN=
+export LOGZIO_API_KEY=
 export PORT=
 ```
 

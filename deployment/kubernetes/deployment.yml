@@ -4,7 +4,7 @@ metadata:
   name: crds-video
   namespace: api
 spec: 
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: crds-video
@@ -48,8 +48,8 @@ spec:
               value: $CONTENTFUL_MANAGEMENT_TOKEN
             - name: CONTENTFUL_ACCESS_TOKEN
               value: $CONTENTFUL_ACCESS_TOKEN
-            - name: LOGZIO_API_TOKEN
-              value: $LOGZIO_API_TOKEN
+            - name: LOGZIO_API_KEY
+              value: $LOGZIO_API_KEY
             - name: CRDS_ENV
               value: $CRDS_ENV
             - name: BITMOVIN_API_KEY
