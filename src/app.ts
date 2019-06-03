@@ -18,6 +18,8 @@ app.use('/encode', EncodeController);
 app.use('/bitmovin', BitmovinController);
 app.use('/health', HealthController);
 
+app.use(logging.logError);
+
 app.listen(port, function () {
   console.log(`Video Service listening on port ${port}`);
 });

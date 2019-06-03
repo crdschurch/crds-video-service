@@ -2,6 +2,7 @@ import Bitmovin from "bitmovin-javascript";
 import { Message } from "../models/message.model";
 import * as codecList from "./bitmovin.codec";
 import { updateContentfulRecord } from "./contentful.service";
+import { NextFunction } from "express";
 
 const bitmovin = Bitmovin({
   'apiKey': process.env.BITMOVIN_API_KEY
@@ -14,7 +15,7 @@ const OUTPUT = process.env.BITMOVIN_OUTPUT_ID;
 async function startEncoding(message: Message) {
 
   const encodingConfig = {
-    inputPath: 'https://bitmovin.com/wp-content/themes/Bitmovin-V-0.1/images/logo.svg', // message.videoUrl.replace(INPUT_FILE_HOST, ''),
+    inputPath: message.videoUrl.replace(INPUT_FILE_HOST, ''),
     segmentLength: 4,
     segmentNaming: 'seg_%number%.ts',
     outputPath: 'bitmovin/' + message.videoId + '/',
@@ -33,10 +34,7 @@ async function startEncoding(message: Message) {
 
   await bitmovin.encoding.encodings(encoding.id).start({});
 
-  await waitUntilEncodingFinished(encoding)
-    .catch(err => {
-      console.log(err);
-    });
+  await waitUntilEncodingFinished(encoding);
 
   const manifestConfig = {
     name: message.videoId + "_manifest",
@@ -66,7 +64,7 @@ export async function createEncoding(message: Message) {
     try {
       await startEncoding(message)
     } catch (err) {
-      console.log(err);
+      throw new Error(err);
     }
   } else {
     const hlsManifests = await bitmovin.encoding.manifests.hls.list();
@@ -221,7 +219,7 @@ const waitUntilEncodingFinished = encoding => {
           }
 
           if (response.status === 'ERROR') {
-            return reject(response.status);
+            return reject(`ENCODING ${response.status}`);
           }
 
           setTimeout(waitForEncodingToBeFinishedOrError, 10000);
@@ -246,7 +244,7 @@ const waitUntilHlsManifestFinished = manifest => {
           }
 
           if (response.status === 'ERROR') {
-            return reject(response.status);
+            return reject(`MANIFEST ${response.status}`);
           }
 
           setTimeout(waitForManifestToBeFinished, 10000);
