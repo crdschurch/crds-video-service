@@ -2,7 +2,6 @@ import Bitmovin from "bitmovin-javascript";
 import { Message } from "../models/message.model";
 import * as codecList from "./bitmovin.codec";
 import { updateContentfulRecord } from "./contentful.service";
-import { NextFunction } from "express";
 
 const bitmovin = Bitmovin({
   'apiKey': process.env.BITMOVIN_API_KEY
