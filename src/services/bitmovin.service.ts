@@ -14,7 +14,7 @@ const OUTPUT = process.env.BITMOVIN_OUTPUT_ID;
 async function startEncoding(message: Message) {
 
   const encodingConfig = {
-    inputPath: message.videoUrl.replace(INPUT_FILE_HOST, ''),
+    inputPath: 'https://bitmovin.com/wp-content/themes/Bitmovin-V-0.1/images/logo.svg', // message.videoUrl.replace(INPUT_FILE_HOST, ''),
     segmentLength: 4,
     segmentNaming: 'seg_%number%.ts',
     outputPath: 'bitmovin/' + message.videoId + '/',
@@ -33,7 +33,10 @@ async function startEncoding(message: Message) {
 
   await bitmovin.encoding.encodings(encoding.id).start({});
 
-  await waitUntilEncodingFinished(encoding);
+  await waitUntilEncodingFinished(encoding)
+    .catch(err => {
+      console.log(err);
+    });
 
   const manifestConfig = {
     name: message.videoId + "_manifest",
@@ -59,7 +62,7 @@ async function startEncoding(message: Message) {
 export async function createEncoding(message: Message) {
   const encodings = await getAllEncodings();
   const encoding = encodings.find(encoding => encoding.name === message.videoId);
-  if (!encoding) {
+  if (encoding) {
     try {
       await startEncoding(message)
     } catch (err) {
