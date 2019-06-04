@@ -59,7 +59,7 @@ async function startEncoding(message: Message) {
 export async function createEncoding(message: Message) {
   const encodings = await getAllEncodings();
   const encoding = encodings.find(encoding => encoding.name === message.videoId);
-  if (encoding) {
+  if (!encoding) {
     try {
       await startEncoding(message)
     } catch (err) {
