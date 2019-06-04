@@ -20,7 +20,7 @@ router.get('/getAllEncodingDurations', (req: Request, res: Response) => {
               "id": encoding.name,
               "duration": duration
             }
-          })
+          }).catch(err => console.log(`The following error is most likely due to errored encodings => ${err.message}`))
       })).then(encodingDurations => res.send(encodingDurations))
     })
     .catch(err => console.log(err));

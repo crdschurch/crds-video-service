@@ -59,11 +59,11 @@ async function startEncoding(message: Message) {
 export async function createEncoding(message: Message) {
   const encodings = await getAllEncodings();
   const encoding = encodings.find(encoding => encoding.name === message.videoId);
-  if (!encoding) {
+  if (encoding) {
     try {
       await startEncoding(message)
     } catch (err) {
-      console.log(err);
+      throw new Error(err);
     }
   } else {
     const hlsManifests = await bitmovin.encoding.manifests.hls.list();
@@ -218,7 +218,7 @@ const waitUntilEncodingFinished = encoding => {
           }
 
           if (response.status === 'ERROR') {
-            return reject(response.status);
+            return reject(`ENCODING ${response.status}`);
           }
 
           setTimeout(waitForEncodingToBeFinishedOrError, 10000);
@@ -243,7 +243,7 @@ const waitUntilHlsManifestFinished = manifest => {
           }
 
           if (response.status === 'ERROR') {
-            return reject(response.status);
+            return reject(`MANIFEST ${response.status}`);
           }
 
           setTimeout(waitForManifestToBeFinished, 10000);
