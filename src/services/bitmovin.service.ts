@@ -46,7 +46,7 @@ async function startEncoding(message: Message) {
       }]
     }]
   };
-  
+
   const manifest = await bitmovin.encoding.manifests.hls.create(manifestConfig);
   await addSubtitles(manifest, message);
   await Promise.all(await createAudioManifest(audioMuxingConfigs, encoding, manifest));
@@ -84,6 +84,16 @@ export function getAllEncodings(encodings: any[] = [], offset: number = 0): Prom
       if (items.length !== 2) return encodings;
       return getAllEncodings(encodings, offset + 100);
     });
+}
+
+export async function getEncoding(encodingName: string) {
+  const encodings = await getAllEncodings();
+  return encodings.find(encoding => encoding.name === encodingName);
+}
+
+export async function getManifestForEncoding(encodingId: string) {
+  const manifests = await bitmovin.encoding.manifests.hls.list(100, 0, encodingId);
+  return manifests.items[0];
 }
 
 export async function getEncodingStreamDuration(encoding) {
