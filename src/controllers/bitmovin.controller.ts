@@ -1,5 +1,5 @@
 import * as bitmovinService from "../services/bitmovin.service";
-import { Response, Request, Router } from "express";
+import { Response, Router } from "express";
 
 const router: Router = Router();
 
