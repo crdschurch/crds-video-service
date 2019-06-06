@@ -31,7 +31,6 @@ function log(req: express.Request, res: express.Response, next: express.NextFunc
   res.on('error', errorFn); // pipeline internal error
 
   logger.log(log);
-  console.log(log);
 
   next();
 }
@@ -51,7 +50,6 @@ function logError(err, req: express.Request, res: express.Response, next: expres
   }
 
   logger.log(log);
-  console.log(log);
 
   next();
 }
