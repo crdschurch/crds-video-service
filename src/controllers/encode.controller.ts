@@ -28,7 +28,9 @@ router.get('/latestMessageStatus', (req: Request, res: Response, next: NextFunct
           BitmovinService.getManifestForEncoding(encoding.id)
             .then(manifest => {
               res.send({
+                messageTitle: message.title,
                 messageId: message.id,
+                messageBitmovinUrl: message.bitmovinUrl,
                 videoId: message.videoId,
                 encodingStatus: encoding.status,
                 manifestStatus: manifest.status
