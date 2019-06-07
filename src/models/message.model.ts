@@ -7,14 +7,16 @@ export class Message extends Content {
   videoId: string;
   transcriptionUrl: string;
   transcriptionId: string;
-
-  constructor(id: string, title: string, videoUrl: string, videoId: string, transcriptionUrl: string, transcriptionId) {
+  bitmovinUrl: string;
+  
+  constructor(id: string, title: string, videoUrl: string, videoId: string, transcriptionUrl: string, transcriptionId: string, bitmovinUrl: string) {
     super(id);
     this.title = title;
     this.videoUrl = videoUrl;
     this.videoId = videoId;
     this.transcriptionUrl = transcriptionUrl;
     this.transcriptionId = transcriptionId;
+    this.bitmovinUrl = bitmovinUrl;
   };
 
   public static createMessageArray(entries: any[]): Promise<Message>[] {
@@ -25,7 +27,7 @@ export class Message extends Content {
 
   public static async createMessageFromJson({ sys, fields }): Promise<Message> {
     const { id } = sys;
-    const { title, video_file, transcription } = fields;
+    const { title, video_file, transcription, bitmovin_url } = fields;
     let videoUrl = '';
     let videoFileId = '';
     let transcriptionUrl = '';
@@ -41,6 +43,6 @@ export class Message extends Content {
       transcriptionUrl = transcription.sys ? transcription.fields.file.url : await contentfulService.getAssetUrl(transcriptionId);
     }
 
-    return new Message(id, title, videoUrl, videoFileId, transcriptionUrl, transcriptionId);
+    return new Message(id, title, videoUrl, videoFileId, transcriptionUrl, transcriptionId, bitmovin_url);
   }
 }

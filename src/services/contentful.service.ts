@@ -1,5 +1,6 @@
 import * as contentful from "contentful";
 import * as contentfulManagement from "contentful-management";
+import { Message } from "../models/message.model";
 
 
 const client = contentful.createClient({
@@ -42,7 +43,16 @@ export function updateContentfulRecord(entryId, assetId) {
       } else {
         console.log(`Bitmovin URL in entry already up to date`);
       }
-    })
+    }).catch(console.error);
+}
 
-    .catch(console.error);
+export function getLatestMessage(): Promise<Message> {
+  return client.getEntries({
+    content_type: 'message',
+    order: '-fields.published_at',
+    limit: 1
+  })
+  .then(entry => {
+    return Message.createMessageFromJson(entry.items[0]);
+  })
 }
