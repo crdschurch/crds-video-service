@@ -21,23 +21,27 @@ router.post('/message', (req: Request, res: Response, next: NextFunction) => {
 });
 
 router.get('/latestMessageStatus', (req: Request, res: Response, next: NextFunction) => {
+  let message, encoding; 
   ContentfulService.getLatestMessage()
-    .then(message => {
-      BitmovinService.getEncoding(message.videoId)
-        .then(encoding => {
-          BitmovinService.getManifestForEncoding(encoding.id)
-            .then(manifest => {
-              res.send({
-                messageTitle: message.title,
-                messageId: message.id,
-                messageBitmovinUrl: message.bitmovinUrl,
-                videoId: message.videoId,
-                encodingStatus: encoding.status,
-                manifestStatus: manifest.status
-              })
-            })
-        })
-    }).catch(error => {
+    .then(mes => {
+      message = mes;
+      return BitmovinService.getEncoding(message.videoId);
+    })
+    .then(enc => {
+      encoding = enc;
+      return BitmovinService.getManifestForEncoding(encoding.id);
+    })
+    .then(manifest => {
+      res.send({
+        messageTitle: message.title,
+        messageId: message.id,
+        messageBitmovinUrl: message.bitmovinUrl,
+        videoId: message.videoId,
+        encodingStatus: encoding.status,
+        manifestStatus: manifest.status
+      });
+    })
+    .catch(error => {
       res.status(500).send(error);
       next(error);
     });
