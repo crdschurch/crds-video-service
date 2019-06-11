@@ -1,16 +1,16 @@
 import * as bitmovinService from "../services/bitmovin.service";
-import { Response, Router } from "express";
+import { Response, Request, Router } from "express";
 
 const router: Router = Router();
 
-router.get('/listEncodings', (res: Response) => {
+router.get('/listEncodings', (req: Request, res: Response) => {
   bitmovinService.getAllEncodings()
     .then(encodings => {
       res.send(encodings);
     })
 })
 
-router.get('/getAllEncodingDurations', (res: Response) => {
+router.get('/getAllEncodingDurations', (req: Request, res: Response) => {
   bitmovinService.getAllEncodings()
     .then((encodings) => {
       Promise.all(encodings.map(encoding => {
