@@ -1,16 +1,16 @@
 import { Response, Request, Router, NextFunction } from "express";
-import { Message } from "../models/message.model";
+import { ContentData } from "../models/contentful-data.model";
 import * as BitmovinService from "../services/bitmovin.service";
 import * as ContentfulService from "../services/contentful.service";
 
 const router: Router = Router();
 
-router.post('/message', (req: Request, res: Response, next: NextFunction) => {
-  Message.createMessageFromJson(req.body)
-    .then(message => {
-      BitmovinService.createEncoding(message)
-        .then((message) => {
-          return res.status(200).send(message);
+router.post('/contentfulData', (req: Request, res: Response, next: NextFunction) => {
+  ContentData.createContentfulDataFromJson(req.body)
+    .then(contentfulData => {
+      BitmovinService.createEncoding(contentfulData)
+        .then((contentfulData) => {
+          return res.status(200).send(contentfulData);
         })
         .catch((error) => {
           res.status(500).send(error);

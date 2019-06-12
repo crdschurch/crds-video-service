@@ -1,7 +1,7 @@
 import Bitmovin from "bitmovin-javascript";
-import { Message } from "../models/message.model";
+import { ContentData } from "../models/contentful-data.model";
 import * as codecList from "./bitmovin.codec";
-import { updateContentfulRecord } from "./contentful.service";
+import { updateContentData } from "./contentful.service";
 
 const bitmovin = Bitmovin({
   'apiKey': process.env.BITMOVIN_API_KEY
@@ -11,17 +11,17 @@ const INPUT_FILE_HOST = process.env.INPUT_FILE_HOST;
 const INPUT = process.env.BITMOVIN_INPUT_ID;
 const OUTPUT = process.env.BITMOVIN_OUTPUT_ID;
 
-async function startEncoding(message: Message) {
+async function startEncoding(contentData: ContentData) {
 
   const encodingConfig = {
-    inputPath: message.videoUrl.replace(INPUT_FILE_HOST, ''),
+    inputPath: contentData.videoUrl.replace(INPUT_FILE_HOST, ''),
     segmentLength: 4,
     segmentNaming: 'seg_%number%.ts',
-    outputPath: 'bitmovin/' + message.videoId + '/',
+    outputPath: 'bitmovin/' + contentData.videoId + '/',
   }
 
   const encoding = await bitmovin.encoding.encodings.create({
-    name: message.videoId,
+    name: contentData.videoId,
     cloudRegion: process.env.CLOUD_REGION
   });
 
@@ -36,7 +36,7 @@ async function startEncoding(message: Message) {
   await waitUntilEncodingFinished(encoding);
 
   const manifestConfig = {
-    name: message.videoId + "_manifest",
+    name: contentData.videoId + "_manifest",
     manifestName: 'manifest.m3u8',
     outputs: [{
       outputId: OUTPUT,
@@ -48,7 +48,7 @@ async function startEncoding(message: Message) {
   };
 
   const manifest = await bitmovin.encoding.manifests.hls.create(manifestConfig);
-  await addSubtitles(manifest, message);
+  await addSubtitles(manifest, contentData);
   await Promise.all(await createAudioManifest(audioMuxingConfigs, encoding, manifest));
   await Promise.all(await createVideoManifest(videoMuxingConfigs, encoding, manifest));
   await bitmovin.encoding.manifests.hls(manifest.id).start();
@@ -56,12 +56,12 @@ async function startEncoding(message: Message) {
 }
 
 
-export async function createEncoding(message: Message) {
+export async function createEncoding(contentData: ContentData) {
   const encodings = await getAllEncodings();
-  const encoding = encodings.find(encoding => encoding.name === message.videoId);
+  const encoding = encodings.find(encoding => encoding.name === contentData.videoId);
   if (!encoding) {
     try {
-      await startEncoding(message)
+      await startEncoding(contentData)
     } catch (err) {
       throw new Error(err);
     }
@@ -69,11 +69,11 @@ export async function createEncoding(message: Message) {
     const hlsManifests = await bitmovin.encoding.manifests.hls.list();
     const hlsManifest = hlsManifests.items.find(manifest => { return manifest.media.find(media => media.encodingId).encodingId === encoding.id })
     if (!hlsManifest.media.find(media => media.type == "VTT"))
-      await addSubtitles(hlsManifest, message);
-    console.log(`Encoding for ${message.videoId} already exists!`);
+      await addSubtitles(hlsManifest, contentData);
+    console.log(`Encoding for ${contentData.videoId} already exists!`);
   }
 
-  return updateContentfulRecord(message.id, message.videoId);
+  return updateContentData(contentData.id, contentData.videoId);
 }
 
 export function getAllEncodings(encodings: any[] = [], offset: number = 0): Promise<any[]> {
@@ -283,7 +283,7 @@ const createHlsVttMedia = (hlsManifest, vttUrl) => {
   });
 };
 
-async function addSubtitles(manifest, message) {
-  if (!message.transcriptionUrl) return;
-  return createHlsVttMedia(manifest, `https:${message.transcriptionUrl}`);
+async function addSubtitles(manifest, contentfulRecord) {
+  if (!contentfulRecord.transcriptionUrl) return;
+  return createHlsVttMedia(manifest, `https:${contentfulRecord.transcriptionUrl}`);
 }

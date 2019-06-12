@@ -1,7 +1,7 @@
-import { Content } from "./content.model";
 import * as contentfulService from "../services/contentful.service";
 
-export class Message extends Content {
+export class ContentData {
+  id: string;
   title: string;
   videoUrl: string;
   videoId: string;
@@ -10,7 +10,7 @@ export class Message extends Content {
   bitmovinUrl: string;
   
   constructor(id: string, title: string, videoUrl: string, videoId: string, transcriptionUrl: string, transcriptionId: string, bitmovinUrl: string) {
-    super(id);
+    this.id = id;
     this.title = title;
     this.videoUrl = videoUrl;
     this.videoId = videoId;
@@ -19,13 +19,13 @@ export class Message extends Content {
     this.bitmovinUrl = bitmovinUrl;
   };
 
-  public static createMessageArray(entries: any[]): Promise<Message>[] {
+  public static createContentfulDataArray(entries: any[]): Promise<ContentData>[] {
     return entries.map((entry) => {
-      return this.createMessageFromJson(entry);
+      return this.createContentfulDataFromJson(entry);
     });
   }
 
-  public static async createMessageFromJson({ sys, fields }): Promise<Message> {
+  public static async createContentfulDataFromJson({ sys, fields }): Promise<ContentData> {
     const { id } = sys;
     const { title, video_file, transcription, bitmovin_url } = fields;
     let videoUrl = '';
@@ -43,6 +43,6 @@ export class Message extends Content {
       transcriptionUrl = transcription.sys ? transcription.fields.file.url : await contentfulService.getAssetUrl(transcriptionId);
     }
 
-    return new Message(id, title, videoUrl, videoFileId, transcriptionUrl, transcriptionId, bitmovin_url);
+    return new ContentData(id, title["en-US"], videoUrl, videoFileId, transcriptionUrl, transcriptionId, bitmovin_url);
   }
 }
