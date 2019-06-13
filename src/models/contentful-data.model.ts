@@ -32,6 +32,7 @@ export class ContentData {
     let videoFileId = '';
     let transcriptionUrl = '';
     let transcriptionId = '';
+    let recordTitle = title["en-US"] ? title["en-US"] : title;
 
     if (video_file) {
       videoFileId = video_file.sys ? video_file.sys.id : video_file["en-US"].sys.id;
@@ -43,6 +44,6 @@ export class ContentData {
       transcriptionUrl = transcription.sys ? transcription.fields.file.url : await contentfulService.getAssetUrl(transcriptionId);
     }
 
-    return new ContentData(id, title["en-US"], videoUrl, videoFileId, transcriptionUrl, transcriptionId, bitmovin_url);
+    return new ContentData(id, recordTitle, videoUrl, videoFileId, transcriptionUrl, transcriptionId, bitmovin_url);
   }
 }
