@@ -48,7 +48,7 @@ router.get('/latestMessageStatus', (req: Request, res: Response, next: NextFunct
     })
     .catch(error => {
       res.status(500).send(error);
-      next(error);
+      next({error, message, encoding, manifest});
     });
 });
 
