@@ -66,10 +66,6 @@ export async function createEncoding(contentData: ContentData) {
       throw new Error(err);
     }
   } else {
-    const hlsManifests = await bitmovin.encoding.manifests.hls.list();
-    const hlsManifest = hlsManifests.items.find(manifest => { return manifest.media.find(media => media.encodingId).encodingId === encoding.id })
-    if (!hlsManifest.media.find(media => media.type == "VTT"))
-      await addSubtitles(hlsManifest, contentData);
     console.log(`Encoding for ${contentData.videoId} already exists!`);
   }
 
