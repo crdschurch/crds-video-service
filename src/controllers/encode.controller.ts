@@ -29,29 +29,24 @@ router.get('/latestMessageStatus', (req: Request, res: Response, next: NextFunct
     })
     .then(enc => {
       encoding = enc;
-      return BitmovinService.getManifestForEncoding(encoding.id);
+      if(encoding){
+        return BitmovinService.getManifestForEncoding(encoding.id);
+      } else {
+        return null;
+      }
     })
     .then(man => {
       manifest = man;
       res.send({
         messageTitle: message.title,
         messageId: message.id,
-        messageBitmovinUrl: message.bitmovinUrl,
-        videoId: message.videoId,
-        encodingStatus: encoding.status,
-        manifestStatus: manifest.status
+        messageBitmovinUrl: message.bitmovinUrl ? message.bitmovinUrl : "NO BITMOVIN URL",
+        videoId: message.videoId ? message.videoId : "NO VIDEO FILE",
+        encodingStatus: encoding ? encoding.status : "NO ENCODING",
+        manifestStatus: manifest ? manifest.status : "NO MANIFEST"
       });
     })
     .catch(error => {
-      if (message)
-        res.status(200).send({
-          messageTitle: message.title,
-          messageId: message.id,
-          messageBitmovinUrl: message.bitmovinUrl,
-          videoId: message.videoId,
-          encodingStatus: encoding ? encoding.status : "ERROR",
-          manifestStatus: manifest ? manifest.status : "ERROR"
-        });
       res.status(500).send(error);
       next(error);
     });
