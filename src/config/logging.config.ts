@@ -42,19 +42,19 @@ function logError(err, req: express.Request, res: express.Response, next: expres
     application: 'crds-video-service',
     environment: process.env.CRDS_ENV,
     level: 'error',
-    message: err
+    message: err.error ? err.error.stack : err
   };
 
   log.message += `\nRequest: ${req.method} ${req.originalUrl}`;
 
-  if (req.originalUrl == "/encode/contentfulData" || req.originalUrl == "/encode/latestMessageStatus") {
+  if (req.originalUrl.includes("encode")) {
     let encodingMessage = err.encoding ? err.encoding.id : err.encoding;
     let manifestMessage = err.manifest ? err.manifest.id : err.manifest;
-    log.message += `\nThere was an issue trying to retrieve the latest message
+    log.message += `\nThere was an issue with ${req.originalUrl}
                     Contentful Entry Title: ${err.message.title}
                     Contentful Entry ID : ${err.message.id}
                     Contentful Entry Video ID: ${err.message.videoId}
-                    Contentful Entry Transription ID: ${err.message.trancriptionId}
+                    Contentful Entry Transription ID: ${err.message.transcriptionId}
                     Contentful Entry Bitmovin URL: ${err.message.bitmovinUrl}
                     Bitmovin Encoding: ${encodingMessage}
                     Bitmovin Manifest: ${manifestMessage}`
