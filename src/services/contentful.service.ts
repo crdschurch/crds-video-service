@@ -21,7 +21,7 @@ export function getAssetUrl(videoId: string): Promise<string> {
     .catch((ex) => { throw ex; });
 }
 
-export function updateContentData(entryId, assetId) {
+export async function updateContentData(entryId, assetId) {
   const bitmovinUrl = `${process.env.CLOUDFRONT_DOMAIN}bitmovin/${assetId}/manifest.m3u8`;
 
   return managementClient.getSpace(process.env.CONTENTFUL_SPACE_ID)

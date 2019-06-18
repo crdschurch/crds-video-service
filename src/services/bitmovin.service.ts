@@ -55,25 +55,37 @@ async function startEncoding(contentData: ContentData) {
   await waitUntilHlsManifestFinished(manifest);
 }
 
-
 export async function createEncoding(contentData: ContentData) {
   const encodings = await getAllEncodings();
   const encoding = encodings.find(encoding => encoding.name === contentData.videoId);
-  if (!encoding) {
-    try {
-      await startEncoding(contentData)
-    } catch (err) {
-      throw new Error(err);
-    }
-  } else {
-    const hlsManifests = await bitmovin.encoding.manifests.hls.list();
-    const hlsManifest = hlsManifests.items.find(manifest => { return manifest.media.find(media => media.encodingId).encodingId === encoding.id })
-    if (!hlsManifest.media.find(media => media.type == "VTT"))
-      await addSubtitles(hlsManifest, contentData);
-    console.log(`Encoding for ${contentData.videoId} already exists!`);
-  }
 
-  return updateContentData(contentData.id, contentData.videoId);
+  if (encoding) {
+    await updateContentData(contentData.id, contentData.videoId);
+    return `Encoding for ${contentData.videoId} already exists!`
+  } else {
+    if (canEncode(contentData)) {
+      try {
+        await startEncoding(contentData)
+      } catch (err) {
+        throw new Error(err);
+      }
+      await updateContentData(contentData.id, contentData.videoId);
+      return `New Encoding created for ${contentData.videoId}`;
+    } else {
+      return `Contentful record ${contentData.id} does not contain video_file or transcription`
+    }
+  }
+}
+
+function canEncode(contentData: ContentData): Boolean {
+  if (!contentData.videoId && !contentData.transcriptionId) {
+    return false;
+  } else if (contentData.videoId && contentData.transcriptionId) {
+    return true;
+  } else {
+    let missing = !contentData.videoId ? "video" : "transcription"
+    throw new Error(`Contentful record missing ${missing}. Cannot encode without both video_file and transcription!`);
+  }
 }
 
 export function getAllEncodings(encodings: any[] = [], offset: number = 0): Promise<any[]> {

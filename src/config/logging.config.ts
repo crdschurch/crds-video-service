@@ -2,6 +2,7 @@ import express from 'express';
 
 let logger = require('logzio-nodejs').createLogger({
   token: process.env.LOGZIO_API_KEY,
+  timeout: 1000
 });
 
 function log(req: express.Request, res: express.Response, next: express.NextFunction) {
@@ -26,7 +27,7 @@ function log(req: express.Request, res: express.Response, next: express.NextFunc
   const errorFn = err => {
     cleanup();
     log.level = 'error';
-    log.message += `\n Response: Request pipeline error: ${err}`;
+    log.message += `\nResponse: Request pipeline error: ${err}`;
     logger.log(log);
   }
 
@@ -65,7 +66,43 @@ function logError(err, req: express.Request, res: express.Response, next: expres
   next();
 }
 
+function logResponseBody(req, res, next) {
+
+  var log = {
+    application: 'crds-video-service',
+    environment: process.env.CRDS_ENV,
+    level: 'info',
+    message: ''
+  };
+
+  var oldWrite = res.write,
+    oldEnd = res.end;
+
+  var chunks = [];
+
+  res.write = function (chunk) {
+    chunks.push(chunk);
+
+    oldWrite.apply(res, arguments);
+  };
+
+  res.end = function (chunk) {
+    if (chunk)
+      chunks.push(chunk);
+
+    var body = Buffer.concat(chunks).toString('utf8');
+    log.message += `Request: ${req.method} ${req.originalUrl}`;
+    log.message += `\nResponse: ${body}`
+
+    oldEnd.apply(res, arguments);
+    logger.log(log);
+  };
+
+  next();
+}
+
 module.exports = {
   log,
+  logResponseBody,
   logError
 }
