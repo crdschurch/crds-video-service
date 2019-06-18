@@ -13,7 +13,7 @@ router.post('/contentfulData', (req: Request, res: Response, next: NextFunction)
           return res.status(200).send(contentfulData);
         })
         .catch((error) => {
-          res.status(500).send(error);
+          res.status(500).send(error.message);
           next(error);
         })
     })

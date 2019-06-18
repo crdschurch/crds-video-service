@@ -1,4 +1,5 @@
 import express from 'express';
+import newrelic from 'newrelic';
 
 let logger = require('logzio-nodejs').createLogger({
   token: process.env.LOGZIO_API_KEY,
@@ -62,6 +63,8 @@ function logError(err, req: express.Request, res: express.Response, next: expres
   }
 
   logger.log(log);
+
+  newrelic.noticeError("errorMessage", log);
 
   next();
 }
