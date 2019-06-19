@@ -1,5 +1,6 @@
 import * as contentful from "contentful";
 import * as contentfulManagement from "contentful-management";
+import { ContentData } from "../models/contentful-data.model";
 
 
 const client = contentful.createClient({
@@ -20,7 +21,7 @@ export function getAssetUrl(videoId: string): Promise<string> {
     .catch((ex) => { throw ex; });
 }
 
-export function updateContentfulRecord(entryId, assetId) {
+export async function updateContentData(entryId, assetId) {
   const bitmovinUrl = `${process.env.CLOUDFRONT_DOMAIN}bitmovin/${assetId}/manifest.m3u8`;
 
   return managementClient.getSpace(process.env.CONTENTFUL_SPACE_ID)
@@ -34,15 +35,22 @@ export function updateContentfulRecord(entryId, assetId) {
         entry.fields.bitmovin_url = { 'en-US': bitmovinUrl };
         return entry.update()
           .then((entry) => {
-            entry.publish()
-          })
-          .then((entry) => {
+            entry.publish();
             console.log(`Entry ${entry.sys.id} bitmovin url updated to ${bitmovinUrl}`);
-          });
+          }).catch(console.error);
       } else {
         console.log(`Bitmovin URL in entry already up to date`);
       }
-    })
+    }).catch(console.error);
+}
 
-    .catch(console.error);
+export function getLatestMessage(): Promise<ContentData> {
+  return client.getEntries({
+    content_type: 'message',
+    order: '-fields.published_at',
+    limit: 1
+  })
+  .then(entry => {
+    return ContentData.createContentfulDataFromJson(entry.items[0]);
+  })
 }

@@ -1,35 +1,38 @@
-import { Content } from "./content.model";
 import * as contentfulService from "../services/contentful.service";
 
-export class Message extends Content {
+export class ContentData {
+  id: string;
   title: string;
   videoUrl: string;
   videoId: string;
   transcriptionUrl: string;
   transcriptionId: string;
-
-  constructor(id: string, title: string, videoUrl: string, videoId: string, transcriptionUrl: string, transcriptionId) {
-    super(id);
+  bitmovinUrl: string;
+  
+  constructor(id: string, title: string, videoUrl: string, videoId: string, transcriptionUrl: string, transcriptionId: string, bitmovinUrl: string) {
+    this.id = id;
     this.title = title;
     this.videoUrl = videoUrl;
     this.videoId = videoId;
     this.transcriptionUrl = transcriptionUrl;
     this.transcriptionId = transcriptionId;
+    this.bitmovinUrl = bitmovinUrl;
   };
 
-  public static createMessageArray(entries: any[]): Promise<Message>[] {
+  public static createContentfulDataArray(entries: any[]): Promise<ContentData>[] {
     return entries.map((entry) => {
-      return this.createMessageFromJson(entry);
+      return this.createContentfulDataFromJson(entry);
     });
   }
 
-  public static async createMessageFromJson({ sys, fields }): Promise<Message> {
+  public static async createContentfulDataFromJson({ sys, fields }): Promise<ContentData> {
     const { id } = sys;
-    const { title, video_file, transcription } = fields;
+    const { title, video_file, transcription, bitmovin_url } = fields;
     let videoUrl = '';
     let videoFileId = '';
     let transcriptionUrl = '';
     let transcriptionId = '';
+    let recordTitle = title["en-US"] ? title["en-US"] : title;
 
     if (video_file) {
       videoFileId = video_file.sys ? video_file.sys.id : video_file["en-US"].sys.id;
@@ -41,6 +44,6 @@ export class Message extends Content {
       transcriptionUrl = transcription.sys ? transcription.fields.file.url : await contentfulService.getAssetUrl(transcriptionId);
     }
 
-    return new Message(id, title, videoUrl, videoFileId, transcriptionUrl, transcriptionId);
+    return new ContentData(id, recordTitle, videoUrl, videoFileId, transcriptionUrl, transcriptionId, bitmovin_url);
   }
 }
