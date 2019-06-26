@@ -71,20 +71,14 @@ export async function createEncoding(contentData: ContentData) {
       await updateContentData(contentData.id, contentData.videoId);
       return `New Encoding created for ${contentData.videoId}`;
     } else {
-      return `Contentful record ${contentData.id} does not contain video_file or transcription`
+      return `Contentful record ${contentData.id} does not contain video_file`
     }
   }
 }
 
 function canEncode(contentData: ContentData): Boolean {
-  if (!contentData.videoId && !contentData.transcriptionId) {
-    return false;
-  } else if (contentData.videoId && contentData.transcriptionId) {
+    if(!contentData.videoId) return false;
     return true;
-  } else {
-    let missing = !contentData.videoId ? "video" : "transcription"
-    throw new Error(`Contentful record missing ${missing}. Cannot encode without both video_file and transcription!`);
-  }
 }
 
 export function getAllEncodings(encodings: any[] = [], offset: number = 0): Promise<any[]> {
