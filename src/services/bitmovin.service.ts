@@ -10,6 +10,7 @@ const bitmovin = Bitmovin({
 const INPUT_FILE_HOST = process.env.INPUT_FILE_HOST;
 const INPUT = process.env.BITMOVIN_INPUT_ID;
 const OUTPUT = process.env.BITMOVIN_OUTPUT_ID;
+const PER_TITLE_ENABLED = process.env.PER_TITLE;
 
 async function startEncoding(contentData: ContentData) {
 
@@ -25,6 +26,43 @@ async function startEncoding(contentData: ContentData) {
     cloudRegion: process.env.CLOUD_REGION
   });
 
+  if(PER_TITLE_ENABLED){
+    await startPerTitleEncoding(contentData, encodingConfig, encoding);
+  } else {
+    await startHardCodedEncoding(contentData, encodingConfig, encoding);
+  }
+  
+}
+
+async function startPerTitleEncoding(contentData: ContentData, encodingConfig, encoding){
+  const autoRepresentation = {
+    adoptConfigurationThreshold: 0.5
+  };
+  
+  const h264PerTitleStartConfiguration = {
+    autoRepresentations: autoRepresentation
+  };
+  
+  const perTitle = {
+    h264Configuration: h264PerTitleStartConfiguration
+  };
+  
+  const startRequest = {
+    encodingMode: 'THREE_PASS',
+    perTitle: perTitle
+  };
+
+  const audioStream = await addAudioStreamToPerTitleEncoding(encoding, encodingConfig);
+  const videoStream = await addVideoStreamToPerTitleEncoding(audioStream, encoding, encodingConfig);
+  await addHlsMuxingForStreams(videoStream, audioStream, encoding, encodingConfig);
+
+  await bitmovin.encoding.encodings(encoding.id).start(startRequest);
+  
+  console.log("Per title encoding not implemented yet");
+  return "Per title encoding not implemented yet";
+}
+
+async function startHardCodedEncoding(contentData: ContentData, encodingConfig, encoding){
   const videoStreamConfigs = await Promise.all(await createVideoStreamConfigs(encodingConfig, encoding));
   const audioStreamConfigs = await Promise.all(await createAudioStreamConfigs(encodingConfig, encoding));
 
@@ -109,6 +147,69 @@ export async function getEncodingStreamDuration(encoding) {
     .then((details: any) => {
       return details.duration;
     });
+}
+
+async function addAudioStreamToPerTitleEncoding(encoding, encodingConfig){
+  const inputStream = {
+    inputId: INPUT,
+    inputPath: encodingConfig.inputPath,
+    selectionMode: 'AUTO'
+  };
+
+  let stream = {
+    inputStreams: [inputStream],
+    codecConfigId: codecList.pertitleAudioCodecID
+  }
+
+  return await bitmovin.encoding.encodings(encoding.id).streams.add(stream);
+}
+
+async function addVideoStreamToPerTitleEncoding(audioStream, encoding, encodingConfig){
+  const inputStream = {
+    inputId: INPUT,
+    inputPath: encodingConfig.inputPath,
+    selectionMode: 'AUTO'
+  };
+
+  let videoStream = {
+    inputStreams: [inputStream],
+    codecConfigId: codecList.perTitleVideoCodecID,
+    mode: 'PER_TITLE_TEMPLATE'
+  };
+
+  return await bitmovin.encoding.encodings(encoding.id).streams.add(videoStream);
+}
+
+async function addHlsMuxingForStreams(videoStream, audioStream, encoding, encodingConfig){
+  const prefix = '{width}_{bitrate}_{uuid}/';
+
+  const streams = [
+    {
+      streamId: videoStream.id
+    },
+    {
+      streamId: audioStream.id
+    }
+  ]
+
+  let hlsMuxing = {
+    name: 'HLS' + prefix,
+    streams,
+    outputs: [
+      {
+        outputId: OUTPUT,
+        outputPath: encodingConfig.outputPath + prefix,
+        acl: [
+          {
+            permission: 'PUBLIC_READ'
+          }
+        ]
+      }
+    ],
+    filename: 'per_title_mp4.mp4'
+  };
+
+  await bitmovin.encoding.encodings(encoding.id).muxings.ts.add(hlsMuxing);
 }
 
 async function createVideoStreamConfigs(encodingConfig, encoding) {
