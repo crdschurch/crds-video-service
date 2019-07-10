@@ -48,7 +48,6 @@ async function startEncoding(contentData: ContentData) {
   };
 
   const manifest = await bitmovin.encoding.manifests.hls.create(manifestConfig);
-  await addSubtitles(manifest, contentData);
   await Promise.all(await createAudioManifest(audioMuxingConfigs, encoding, manifest));
   await Promise.all(await createVideoManifest(videoMuxingConfigs, encoding, manifest));
   await bitmovin.encoding.manifests.hls(manifest.id).start();
@@ -72,20 +71,14 @@ export async function createEncoding(contentData: ContentData) {
       await updateContentData(contentData.id, contentData.videoId);
       return `New Encoding created for ${contentData.videoId}`;
     } else {
-      return `Contentful record ${contentData.id} does not contain video_file or transcription`
+      return `Contentful record ${contentData.id} does not contain video_file`
     }
   }
 }
 
 function canEncode(contentData: ContentData): Boolean {
-  if (!contentData.videoId && !contentData.transcriptionId) {
-    return false;
-  } else if (contentData.videoId && contentData.transcriptionId) {
+    if(!contentData.videoId) return false;
     return true;
-  } else {
-    let missing = !contentData.videoId ? "video" : "transcription"
-    throw new Error(`Contentful record missing ${missing}. Cannot encode without both video_file and transcription!`);
-  }
 }
 
 export function getAllEncodings(encodings: any[] = [], offset: number = 0): Promise<any[]> {
@@ -213,7 +206,6 @@ async function createVideoManifest(videoMuxingConfigs, encoding, manifest) {
     .map(videoMuxingConfig => {
       var variantStream = {
         audio: 'audio_group',
-        subtitles: 'subtitles_group',
         closedCaptions: 'NONE',
         segmentPath: 'video/' + videoMuxingConfig.streams[0].streamId + '/',
         uri: `video${videoMuxingConfig.streams[0].streamId}.m3u8`,
@@ -274,28 +266,3 @@ const waitUntilHlsManifestFinished = manifest => {
     waitForManifestToBeFinished();
   });
 };
-
-const createHlsVttMedia = (hlsManifest, vttUrl) => {
-  return new Promise((resolve, reject) => {
-    const vttMedia = {
-      name: 'en',
-      groupId: 'subtitles_group',
-      language: 'en',
-      vttUrl,
-      uri: 'vtt_media.m3u8'
-    };
-
-    bitmovin.encoding.manifests
-      .hls(hlsManifest.id)
-      .media.vtt.add(vttMedia)
-      .then(createdVttMedia => {
-        console.log('Successfully created HLS VTT Media', createdVttMedia);
-        resolve(createdVttMedia);
-      })
-  });
-};
-
-async function addSubtitles(manifest, contentfulRecord) {
-  if (!contentfulRecord.transcriptionUrl) return;
-  return createHlsVttMedia(manifest, `https:${contentfulRecord.transcriptionUrl}`);
-}
