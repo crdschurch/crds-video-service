@@ -58,8 +58,38 @@ async function startPerTitleEncoding(contentData: ContentData, encodingConfig, e
 
   await bitmovin.encoding.encodings(encoding.id).start(startRequest);
   
-  console.log("Per title encoding not implemented yet");
-  return "Per title encoding not implemented yet";
+  await waitUntilEncodingFinished(encoding);
+}
+
+async function addAudioStreamToPerTitleEncoding(encoding, encodingConfig){
+  const inputStream = {
+    inputId: INPUT,
+    inputPath: encodingConfig.inputPath,
+    selectionMode: 'AUTO'
+  };
+
+  let stream = {
+    inputStreams: [inputStream],
+    codecConfigId: codecList.perTitleAudioCodecID
+  }
+
+  return await bitmovin.encoding.encodings(encoding.id).streams.add(stream);
+}
+
+async function addVideoStreamToPerTitleEncoding(audioStream, encoding, encodingConfig){
+  const inputStream = {
+    inputId: INPUT,
+    inputPath: encodingConfig.inputPath,
+    selectionMode: 'AUTO'
+  };
+
+  let videoStream = {
+    inputStreams: [inputStream],
+    codecConfigId: codecList.perTitleVideoCodecID,
+    mode: 'PER_TITLE_TEMPLATE'
+  };
+
+  return await bitmovin.encoding.encodings(encoding.id).streams.add(videoStream);
 }
 
 async function startHardCodedEncoding(contentData: ContentData, encodingConfig, encoding){
@@ -149,37 +179,6 @@ export async function getEncodingStreamDuration(encoding) {
     });
 }
 
-async function addAudioStreamToPerTitleEncoding(encoding, encodingConfig){
-  const inputStream = {
-    inputId: INPUT,
-    inputPath: encodingConfig.inputPath,
-    selectionMode: 'AUTO'
-  };
-
-  let stream = {
-    inputStreams: [inputStream],
-    codecConfigId: codecList.pertitleAudioCodecID
-  }
-
-  return await bitmovin.encoding.encodings(encoding.id).streams.add(stream);
-}
-
-async function addVideoStreamToPerTitleEncoding(audioStream, encoding, encodingConfig){
-  const inputStream = {
-    inputId: INPUT,
-    inputPath: encodingConfig.inputPath,
-    selectionMode: 'AUTO'
-  };
-
-  let videoStream = {
-    inputStreams: [inputStream],
-    codecConfigId: codecList.perTitleVideoCodecID,
-    mode: 'PER_TITLE_TEMPLATE'
-  };
-
-  return await bitmovin.encoding.encodings(encoding.id).streams.add(videoStream);
-}
-
 async function addHlsMuxingForStreams(videoStream, audioStream, encoding, encodingConfig){
   const prefix = '{width}_{bitrate}_{uuid}/';
 
@@ -193,7 +192,7 @@ async function addHlsMuxingForStreams(videoStream, audioStream, encoding, encodi
   ]
 
   let hlsMuxing = {
-    name: 'HLS' + prefix,
+    name: 'HLS' + prefix, 
     streams,
     outputs: [
       {

@@ -14,3 +14,7 @@ export const videoCodecConfigurations = [
 export const audioCodecConfiguration = [
   '9d80ae8b-b9b0-41d2-b049-8729a83b8f26'
 ]
+
+export const perTitleVideoCodecID = 'c957dc2f-d7ea-4074-b352-117679712894';
+
+export const perTitleAudioCodecID = '9d80ae8b-b9b0-41d2-b049-8729a83b8f26';
