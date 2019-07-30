@@ -27,9 +27,12 @@ async function startEncoding(contentData: ContentData) {
 
   const videoStreamConfigs = await Promise.all(await createVideoStreamConfigs(encodingConfig, encoding));
   const audioStreamConfigs = await Promise.all(await createAudioStreamConfigs(encodingConfig, encoding));
-
+  const mp4VideoStreamConfig = await createMp4StreamConfig(encodingConfig, encoding, codecList.mp4VideoCodec);
+  const mp4AudioStreamConfig = await createMp4StreamConfig(encodingConfig, encoding, codecList.mp4AudioCodec);
+  
   const videoMuxingConfigs = await Promise.all(await createVideoMuxingConfigs(encodingConfig, encoding, videoStreamConfigs));
   const audioMuxingConfigs = await Promise.all(await createAudioMuxingConfigs(encodingConfig, encoding, audioStreamConfigs));
+  await addMp4Muxing(encoding, encodingConfig, mp4VideoStreamConfig, mp4AudioStreamConfig, contentData);
 
   await bitmovin.encoding.encodings(encoding.id).start({});
 
@@ -57,7 +60,6 @@ async function startEncoding(contentData: ContentData) {
 export async function createEncoding(contentData: ContentData) {
   const encodings = await getAllEncodings();
   const encoding = encodings.find(encoding => encoding.name === contentData.videoId);
-
   if (encoding) {
     await updateContentData(contentData.id, contentData.videoId);
     return `Encoding for ${contentData.videoId} already exists!`
@@ -77,8 +79,8 @@ export async function createEncoding(contentData: ContentData) {
 }
 
 function canEncode(contentData: ContentData): Boolean {
-    if(!contentData.videoId) return false;
-    return true;
+  if (!contentData.videoId) return false;
+  return true;
 }
 
 export function getAllEncodings(encodings: any[] = [], offset: number = 0): Promise<any[]> {
@@ -109,6 +111,48 @@ export async function getEncodingStreamDuration(encoding) {
     .then((details: any) => {
       return details.duration;
     });
+}
+
+async function addMp4Muxing(encoding, encodingConfig, mp4VideoStreamConfig, mp4AudioStreamConfig, contentData: ContentData) {
+  const mp4muxing = {
+    name: "Download Ready File",
+    streams: [
+      {
+        streamId: mp4VideoStreamConfig.id
+      },
+      {
+        streamId: mp4AudioStreamConfig.id
+      }
+    ],
+    outputs: [
+      {
+        outputId: OUTPUT,
+        outputPath: encodingConfig.outputPath,
+        acl: [
+          {
+            scope: "public",
+            permission: "PUBLIC_READ"
+          }
+        ]
+      }
+    ],
+    streamConditionsMode: "DROP_STREAM",
+    filename: `${contentData.title}.mp4`
+  }
+
+  return bitmovin.encoding.encodings(encoding.id).muxings.mp4.add(mp4muxing);
+}
+
+async function createMp4StreamConfig(encodingConfig, encoding, codecId) {
+  const mp4StreamConfig = {
+    codecConfigId: codecId,
+    inputStreams: [{
+      inputId: INPUT,
+      inputPath: encodingConfig.inputPath,
+      selectionMode: 'AUTO'
+    }]
+  };
+  return await bitmovin.encoding.encodings(encoding.id).streams.add(mp4StreamConfig);
 }
 
 async function createVideoStreamConfigs(encodingConfig, encoding) {
