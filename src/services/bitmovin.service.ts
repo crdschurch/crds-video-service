@@ -17,7 +17,7 @@ async function startEncoding(contentData: ContentData) {
     inputPath: contentData.videoUrl.replace(INPUT_FILE_HOST, ''),
     segmentLength: 4,
     segmentNaming: 'seg_%number%.ts',
-    outputPath: 'bitmovin/' + contentData.videoId + '/',
+    outputPath: 'bitmovin/' + contentData.videoId + '/'
   }
 
   const encoding = await bitmovin.encoding.encodings.create({
@@ -29,7 +29,7 @@ async function startEncoding(contentData: ContentData) {
   const audioStreamConfigs = await Promise.all(await createAudioStreamConfigs(encodingConfig, encoding));
   const mp4VideoStreamConfig = await createMp4StreamConfig(encodingConfig, encoding, codecList.mp4VideoCodec);
   const mp4AudioStreamConfig = await createMp4StreamConfig(encodingConfig, encoding, codecList.mp4AudioCodec);
-  
+
   const videoMuxingConfigs = await Promise.all(await createVideoMuxingConfigs(encodingConfig, encoding, videoStreamConfigs));
   const audioMuxingConfigs = await Promise.all(await createAudioMuxingConfigs(encodingConfig, encoding, audioStreamConfigs));
   await addMp4Muxing(encoding, encodingConfig, mp4VideoStreamConfig, mp4AudioStreamConfig, contentData);
