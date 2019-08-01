@@ -15,6 +15,20 @@ export const audioCodecConfiguration = [
   '9d80ae8b-b9b0-41d2-b049-8729a83b8f26'
 ];
 
-export const mp4VideoCodec = 'e1285ade-5f66-4a78-8699-a77a64ec608c';
+export const mp4VideoCodecs = [
+  {
+    codecId: 'e1285ade-5f66-4a78-8699-a77a64ec608c',
+    type: '360p'
+  },
+  {
+    codecId: 'c957dc2f-d7ea-4074-b352-117679712894',
+    type: '1080p'
+  }
+];
 
-export const mp4AudioCodec = '9d80ae8b-b9b0-41d2-b049-8729a83b8f26';
+export const mp4AudioCodecs = [
+  {
+    codecId: '9d80ae8b-b9b0-41d2-b049-8729a83b8f26',
+    type: 'AAC'
+  }
+];
