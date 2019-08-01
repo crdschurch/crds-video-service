@@ -2,6 +2,7 @@ import Bitmovin from "bitmovin-javascript";
 import { ContentData } from "../models/contentful-data.model";
 import * as codecList from "./bitmovin.codec";
 import { updateContentData } from "./contentful.service";
+import { hasDownloads } from "./s3.service";
 
 const bitmovin = Bitmovin({
   'apiKey': process.env.BITMOVIN_API_KEY
@@ -27,14 +28,17 @@ async function startEncoding(contentData: ContentData) {
 
   const videoStreamConfigs = await Promise.all(await createVideoStreamConfigs(encodingConfig, encoding));
   const audioStreamConfigs = await Promise.all(await createAudioStreamConfigs(encodingConfig, encoding));
-  const mp4VideoStreamConfig = await createMp4StreamConfig(encodingConfig, encoding, codecList.mp4VideoCodec);
-  const mp4AudioStreamConfig = await createMp4StreamConfig(encodingConfig, encoding, codecList.mp4AudioCodec);
 
   const videoMuxingConfigs = await Promise.all(await createVideoMuxingConfigs(encodingConfig, encoding, videoStreamConfigs));
   const audioMuxingConfigs = await Promise.all(await createAudioMuxingConfigs(encodingConfig, encoding, audioStreamConfigs));
-  await addMp4Muxing(encoding, encodingConfig, mp4VideoStreamConfig, mp4AudioStreamConfig, contentData);
 
-  await bitmovin.encoding.encodings(encoding.id).start({});
+  await addMp4ToEncoding(contentData, encoding);
+
+  try {
+    await bitmovin.encoding.encodings(encoding.id).start({});
+  } catch (err) {
+    throw new Error(err);
+  }
 
   await waitUntilEncodingFinished(encoding);
 
@@ -57,14 +61,21 @@ async function startEncoding(contentData: ContentData) {
   await waitUntilHlsManifestFinished(manifest);
 }
 
+/*
+  flow:
+    1. If there is already an encoding with downloads, simply write back to Contentful
+    2. If there is no encoding (and inherently no mp4) create a full encoding
+    3. If the encoding doesn't have an mp4 download due to implementation timing add them
+*/
 export async function createEncoding(contentData: ContentData) {
   const encodings = await getAllEncodings();
+  const downloadsExist = await hasDownloads(contentData);
   const encoding = encodings.find(encoding => encoding.name === contentData.videoId);
-  if (encoding) {
+  if (encoding && downloadsExist) {
     await updateContentData(contentData.id, contentData.videoId);
-    return `Encoding for ${contentData.videoId} already exists!`
-  } else {
-    if (canEncode(contentData)) {
+    return `Encoding/downloads for ${contentData.videoId} already exists!`
+  } else if (!encoding) {
+    if (contentData.videoId) {
       try {
         await startEncoding(contentData)
       } catch (err) {
@@ -73,14 +84,49 @@ export async function createEncoding(contentData: ContentData) {
       await updateContentData(contentData.id, contentData.videoId);
       return `New Encoding created for ${contentData.videoId}`;
     } else {
-      return `Contentful record ${contentData.id} does not contain video_file`
+      return `Contentful record ${contentData.id} does not contain video_file`;
     }
+  } else {
+    // if there is an encoding but there isn't an mp4 download, add the download
+    try {
+      await addMp4ToExistingEncoding(contentData);
+    } catch (err) {
+      console.log(err);
+    }
+
+    return `Added mp4 downloads to encoding ${encoding.id}`;
   }
 }
 
-function canEncode(contentData: ContentData): Boolean {
-  if (!contentData.videoId) return false;
-  return true;
+async function addMp4ToEncoding(contentData: ContentData, encoding) {
+  const encodingConfig = {
+    inputPath: contentData.videoUrl.replace(INPUT_FILE_HOST, ''),
+    outputPath: 'bitmovin/' + contentData.videoId + '/'
+  }
+
+  const mp4VideoStreamConfigs = await Promise.all(await createMp4StreamConfig(encodingConfig, encoding, codecList.mp4VideoCodecs));
+  const mp4AudioStreamConfig = await Promise.all(await createMp4StreamConfig(encodingConfig, encoding, codecList.mp4AudioCodecs));
+
+  await Promise.all(await mp4VideoStreamConfigs
+    .map(async videoConfig => {
+      await addMp4Muxing(encoding, encodingConfig, videoConfig, mp4AudioStreamConfig[0], contentData);
+    }))
+}
+
+export async function addMp4ToExistingEncoding(contentData: ContentData) {
+  /*
+    Encodings in FINISHED state cannot be amended
+    New encoding is created to generate the mp4 into the same s3 folder
+      as the original encoding
+  */
+  const encoding = await bitmovin.encoding.encodings.create({
+    name: `${contentData.videoId}_mp4_add_on`,
+    cloudRegion: process.env.CLOUD_REGION
+  });
+
+  await addMp4ToEncoding(contentData, encoding);
+  await bitmovin.encoding.encodings(encoding.id).start({});
+  await waitUntilEncodingFinished(encoding);
 }
 
 export function getAllEncodings(encodings: any[] = [], offset: number = 0): Promise<any[]> {
@@ -115,7 +161,7 @@ export async function getEncodingStreamDuration(encoding) {
 
 async function addMp4Muxing(encoding, encodingConfig, mp4VideoStreamConfig, mp4AudioStreamConfig, contentData: ContentData) {
   const mp4muxing = {
-    name: "Download Ready File",
+    name: `${mp4VideoStreamConfig.name} Download Ready File`,
     streams: [
       {
         streamId: mp4VideoStreamConfig.id
@@ -137,22 +183,26 @@ async function addMp4Muxing(encoding, encodingConfig, mp4VideoStreamConfig, mp4A
       }
     ],
     streamConditionsMode: "DROP_STREAM",
-    filename: `${contentData.title}.mp4`
+    filename: `${contentData.title}_${mp4VideoStreamConfig.name}.mp4`
   }
 
-  return bitmovin.encoding.encodings(encoding.id).muxings.mp4.add(mp4muxing);
+  return await bitmovin.encoding.encodings(encoding.id).muxings.mp4.add(mp4muxing);
 }
 
-async function createMp4StreamConfig(encodingConfig, encoding, codecId) {
-  const mp4StreamConfig = {
-    codecConfigId: codecId,
-    inputStreams: [{
-      inputId: INPUT,
-      inputPath: encodingConfig.inputPath,
-      selectionMode: 'AUTO'
-    }]
-  };
-  return await bitmovin.encoding.encodings(encoding.id).streams.add(mp4StreamConfig);
+async function createMp4StreamConfig(encodingConfig, encoding, codecSet) {
+  return await codecSet
+    .map(async codec => {
+      const mp4StreamConfig = {
+        name: codec.type,
+        codecConfigId: codec.codecId,
+        inputStreams: [{
+          inputId: INPUT,
+          inputPath: encodingConfig.inputPath,
+          selectionMode: 'AUTO'
+        }]
+      };
+      return await bitmovin.encoding.encodings(encoding.id).streams.add(mp4StreamConfig);
+    })
 }
 
 async function createVideoStreamConfigs(encodingConfig, encoding) {
