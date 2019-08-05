@@ -65,3 +65,6 @@ typings/
 
 # tsc build output
 build/
+
+# mac specific file
+.DS_Store
