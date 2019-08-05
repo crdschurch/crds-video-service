@@ -96,7 +96,7 @@ export async function createEncoding(contentData: ContentData) {
     return await bitmovin.encoding.encodings(encoding.id)
       .status()
       .then(async response => {
-        if (response.status === 'FINISHED'){
+        if (response.status === 'FINISHED') {
           console.log('Adding mp4s to previously finished encoding');
           try {
             await addMp4ToExistingEncoding(contentData);
@@ -110,7 +110,6 @@ export async function createEncoding(contentData: ContentData) {
           return `New encoding still running, no need to add MP4s`;
         }
       })
-
   }
 }
 
