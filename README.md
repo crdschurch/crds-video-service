@@ -43,6 +43,10 @@ export CRDS_ENV=local
 export INPUT_FILE_HOST=
 export LOGZIO_API_KEY=
 export PORT=
+export AWS_ACCESS_KEY=
+export AWS_SECRET_KEY=
+export BITMOVIN_BUCKET=
+export BITMOVIN_DIRECTORY=
 ```
 
 ## Launch Application
