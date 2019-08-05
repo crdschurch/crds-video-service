@@ -2,7 +2,7 @@ import Bitmovin from "bitmovin-javascript";
 import { ContentData } from "../models/contentful-data.model";
 import * as codecList from "./bitmovin.codec";
 import { updateContentData } from "./contentful.service";
-import { hasDownloads } from "./s3.service";
+import { hasDownloads, setMetaDataForMp4 } from "./s3.service";
 
 const bitmovin = Bitmovin({
   'apiKey': process.env.BITMOVIN_API_KEY
@@ -59,6 +59,8 @@ async function startEncoding(contentData: ContentData) {
   await Promise.all(await createVideoManifest(videoMuxingConfigs, encoding, manifest));
   await bitmovin.encoding.manifests.hls(manifest.id).start();
   await waitUntilHlsManifestFinished(manifest);
+
+  await Promise.all(await setMetaDataForMp4(contentData));
 }
 
 /*
@@ -127,6 +129,8 @@ export async function addMp4ToExistingEncoding(contentData: ContentData) {
   await addMp4ToEncoding(contentData, encoding);
   await bitmovin.encoding.encodings(encoding.id).start({});
   await waitUntilEncodingFinished(encoding);
+
+  await Promise.all(await setMetaDataForMp4(contentData));
 }
 
 export function getAllEncodings(encodings: any[] = [], offset: number = 0): Promise<any[]> {
