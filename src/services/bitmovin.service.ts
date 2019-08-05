@@ -74,6 +74,7 @@ export async function createEncoding(contentData: ContentData) {
   const encodings = await getAllEncodings();
   const downloadsExist = await hasDownloads(contentData);
   const encoding = encodings.find(encoding => encoding.name === contentData.videoId);
+  const mp4Encoding = encodings.find(encoding => encoding.name === `${contentData.videoId}_mp4_add_on`)
 
   if (encoding && downloadsExist) {
     await updateContentData(contentData.id, contentData.videoId);
@@ -93,8 +94,10 @@ export async function createEncoding(contentData: ContentData) {
   } else {
     // if there is an encoding but there isn't an mp4 download, 
     // add the download only if the encoding is finished
-    return await bitmovin.encoding.encodings(encoding.id)
-      .status()
+    // and there isn't already an MP4 encoding running
+    if(!mp4Encoding){
+      return await bitmovin.encoding.encodings(encoding.id)
+      .status() 
       .then(async response => {
         if (response.status === 'FINISHED') {
           console.log('Adding mp4s to previously finished encoding');
@@ -110,6 +113,9 @@ export async function createEncoding(contentData: ContentData) {
           return `New encoding still running, no need to add MP4s`;
         }
       })
+    } else {
+      return `${mp4Encoding.name} already created and running`;
+    }
   }
 }
 
