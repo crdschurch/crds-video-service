@@ -17,7 +17,7 @@ router.post('/contentfulData', (req: Request, res: Response, next: NextFunction)
           next(error);
         })
     })
-    .catch(err => res.status(400).send(err))
+    .catch(err => res.status(500).send(err))
 });
 
 router.get('/latestMessageStatus', (req: Request, res: Response, next: NextFunction) => {
@@ -29,7 +29,7 @@ router.get('/latestMessageStatus', (req: Request, res: Response, next: NextFunct
     })
     .then(enc => {
       encoding = enc;
-      if(encoding){
+      if (encoding) {
         return BitmovinService.getManifestForEncoding(encoding.id);
       } else {
         return null;
@@ -48,7 +48,7 @@ router.get('/latestMessageStatus', (req: Request, res: Response, next: NextFunct
     })
     .catch(error => {
       res.status(500).send(error);
-      next({error, message, encoding, manifest});
+      next({ error, message, encoding, manifest });
     });
 });
 

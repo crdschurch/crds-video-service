@@ -70,3 +70,11 @@ spec:
               value: $NR_APP_NAME
             - name: NEW_RELIC_DISTRIBUTED_TRACING_ENABLED
               value: $NEW_RELIC_DISTRIBUTED_TRACING_ENABLED
+            - name: AWS_ACCESS_KEY
+              value: $AWS_ACCESS_KEY
+            - name: AWS_SECRET_KEY
+              value: $AWS_SECRET_KEY
+            - name: BITMOVIN_BUCKET
+              value: $BITMOVIN_BUCKET
+            - name: BITMOVIN_DIRECTORY
+              value: $BITMOVIN_DIRECTORY
