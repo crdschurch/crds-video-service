@@ -11,13 +11,10 @@ const bitmovin = Bitmovin({
   'apiKey': process.env.BITMOVIN_API_KEY
 });
 
-const INPUT_FILE_HOST = process.env.INPUT_FILE_HOST;
-const PER_TITLE_ENABLED = process.env.PER_TITLE;
-
 async function startEncoding(contentData: ContentData) {
 
   const encodingConfig = {
-    inputPath: contentData.videoUrl.replace(INPUT_FILE_HOST, ''),
+    inputPath: contentData.videoUrl.replace(process.env.INPUT_FILE_HOST, ''),
     segmentLength: 4,
     segmentNaming: 'seg_%number%.ts',
     outputPath: 'bitmovin/' + contentData.videoId + '/'
@@ -28,7 +25,7 @@ async function startEncoding(contentData: ContentData) {
     cloudRegion: process.env.CLOUD_REGION
   });
 
-  if (PER_TITLE_ENABLED) {
+  if (process.env.PER_TITLE === 'true') {
     await startPerTitleEncoding(contentData, encodingConfig, encoding);
   } else {
     await startStandardEncoding(contentData, encodingConfig, encoding);
