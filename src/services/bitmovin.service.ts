@@ -6,6 +6,7 @@ import { startPerTitleEncoding } from "./bitmovin.perTitle.service";
 import { startStandardEncoding } from "./bitmovin.standard.service";
 import { addMp4ToExistingEncoding } from "./bitmovin.mp4.service";
 
+// TODO: abstract bitmovin client for the multiple services
 const bitmovin = Bitmovin({
   'apiKey': process.env.BITMOVIN_API_KEY
 });
