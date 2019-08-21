@@ -29,12 +29,12 @@ npm install
 ```
 ## Environment Example
 ```
-export APPLICATION_NAME=crds-video-service
+export APPLICATION_NAME=
 export BITMOVIN_API_KEY=
 export BITMOVIN_INPUT_ID=
 export BITMOVIN_OUTPUT_ID=
 export CLOUDFRONT_DOMAIN=
-export CLOUD_REGION=AWS_US_EAST_1
+export CLOUD_REGION=
 export CONTENTFUL_ACCESS_TOKEN=
 export CONTENTFUL_MANAGEMENT_TOKEN=
 export CONTENTFUL_SPACE_ID=
@@ -47,7 +47,20 @@ export AWS_ACCESS_KEY=
 export AWS_SECRET_KEY=
 export BITMOVIN_BUCKET=
 export BITMOVIN_DIRECTORY=
+export PER_TITLE=true
+export PER_TITLE_MODE=
 ```
+
+PER_TITLE will run a per-title encoding analysis when enabled. **This increases the billable encoding minute multiplier**
+
+PER_TITLE_MODE will determine how many passes the per-title analysis will run. **This increases the billable encoding minute multiplier**
+Valid values:
+  * SINGLE_PASS
+    * Cost multiplier is 1x
+  * TWO_PASS
+    * Cost multiplier is 1.25x
+  * THREE_PASS
+    * Cost multiplier is 1.5x
 
 ## Launch Application
 Using VSCode simply run using `F5` or select to launch the application
