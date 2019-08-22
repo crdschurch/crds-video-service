@@ -28,3 +28,5 @@ export const mp4AudioCodecs = [
     type: 'AAC'
   }
 ];
+
+export const perTitleAudioCodecID = '9d80ae8b-b9b0-41d2-b049-8729a83b8f26';

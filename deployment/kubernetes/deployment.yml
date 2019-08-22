@@ -78,3 +78,8 @@ spec:
               value: $BITMOVIN_BUCKET
             - name: BITMOVIN_DIRECTORY
               value: $BITMOVIN_DIRECTORY
+            - name: PER_TITLE
+              value: $PER_TITLE
+            - name: PER_TITLE_MODE
+              value: $PER_TITLE_MODE
+

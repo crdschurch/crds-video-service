@@ -2,7 +2,6 @@ import * as contentful from "contentful";
 import * as contentfulManagement from "contentful-management";
 import { ContentData } from "../models/contentful-data.model";
 
-
 const client = contentful.createClient({
   accessToken: process.env['CONTENTFUL_ACCESS_TOKEN'] as string,
   space: process.env['CONTENTFUL_SPACE_ID'] as string,
