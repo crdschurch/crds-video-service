@@ -25,7 +25,7 @@ async function startEncoding(contentData: ContentData) {
     cloudRegion: process.env.CLOUD_REGION
   });
 
-  if (process.env.PER_TITLE === 'true') {
+  if (process.env.PER_TITLE === 'enabled') {
     await startPerTitleEncoding(contentData, encodingConfig, encoding);
   } else {
     await startStandardEncoding(contentData, encodingConfig, encoding);
