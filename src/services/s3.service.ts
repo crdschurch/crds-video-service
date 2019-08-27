@@ -14,9 +14,9 @@ export function hasDownloads(contentfulData: ContentData) {
     Key: `${contentfulData.videoId}/${contentfulData.title}_1080p.mp4`
   };
 
-  return s3.getObject(params)
+  return s3.headObject(params)
     .promise()
-    .then(data => {
+    .then(() => {
       return true;
     })
     .catch(err => {
