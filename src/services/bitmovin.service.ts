@@ -1,10 +1,8 @@
 import Bitmovin from "bitmovin-javascript";
 import { ContentData } from "../models/contentful-data.model";
 import { updateContentData } from "./contentful.service";
-import { hasDownloads } from "./s3.service";
 import { startPerTitleEncoding } from "./bitmovin.perTitle.service";
 import { startStandardEncoding } from "./bitmovin.standard.service";
-import { addMp4ToExistingEncoding } from "./bitmovin.mp4.service";
 
 // TODO: abstract bitmovin client for the multiple services
 const bitmovin = Bitmovin({
@@ -22,6 +20,7 @@ async function startEncoding(contentData: ContentData) {
 
   const encoding = await bitmovin.encoding.encodings.create({
     name: contentData.videoId,
+
     cloudRegion: process.env.CLOUD_REGION
   });
 
@@ -40,38 +39,24 @@ async function startEncoding(contentData: ContentData) {
 */
 export async function createEncoding(contentData: ContentData) {
   const encodings = await getAllEncodings();
-  const downloadsExist = await hasDownloads(contentData);
   const encoding = encodings.find(encoding => encoding.name === contentData.videoId);
-  const mp4Encoding = encodings.find(encoding => encoding.name === `${contentData.videoId}_mp4_add_on`)
 
-  if (encoding && downloadsExist) {
-    await updateContentData(contentData.id, contentData.videoId);
-    return `Encoding/downloads for ${contentData.videoId} already exists!`
-  } else if (!encoding) {
+  if (encoding) {
+    if(encoding.status === "FINISHED"){
+      await updateContentData(contentData.id, contentData.videoId);
+      return `Encoding for ${contentData.videoId} already exists!`
+    } else if (encoding.status === "ERROR") {
+      return `Encoding for ${contentData.videoId} has encountered an error. Please contact production support!`;
+    } else {
+      return `Encoding for ${contentData.videoId} is still processing`;
+    }
+  } else {
     if (contentData.videoId) {
       await startEncoding(contentData)
       await updateContentData(contentData.id, contentData.videoId);
       return `New Encoding created for ${contentData.videoId}`;
     } else {
       return `Contentful record ${contentData.id} does not contain video_file`;
-    }
-  } else {
-    // if there is an encoding but there isn't an mp4 download, 
-    // add the download only if the encoding is finished
-    // and there isn't already an MP4 encoding running
-    if (!mp4Encoding) {
-      return await bitmovin.encoding.encodings(encoding.id)
-        .status()
-        .then(async response => {
-          if (response.status === 'FINISHED') {
-            return await addMp4ToExistingEncoding(contentData);
-          } else {
-            ;
-            return `New encoding still running, no need to add MP4s`;
-          }
-        })
-    } else {
-      return `${mp4Encoding.name} already created and running`;
     }
   }
 }
