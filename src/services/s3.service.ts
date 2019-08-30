@@ -43,8 +43,11 @@ export function setMetaDataForMp4(contentfulData: ContentData): Promise<any>[] {
 
       return s3.copyObject(params)
         .promise()
-        .then(data => {
+        .then(() => {
           console.log(`Metadata properly set for ${contentfulData.title}_${codec.type}.mp4`);
+        })
+        .catch(error => {
+          console.log(error);
         })
     })
 }
