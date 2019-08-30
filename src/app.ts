@@ -22,8 +22,10 @@ app.use('/health', HealthController);
 
 app.use(logging.logError);
 
-app.listen(port, function () {
+var server = app.listen(port, function () {
   console.log(`Video Service listening on port ${port}`);
 });
+
+server.setTimeout(1800000);
 
 export default app;

@@ -14,9 +14,9 @@ export function hasDownloads(contentfulData: ContentData) {
     Key: `${contentfulData.videoId}/${contentfulData.title}_1080p.mp4`
   };
 
-  return s3.getObject(params)
+  return s3.headObject(params)
     .promise()
-    .then(data => {
+    .then(() => {
       return true;
     })
     .catch(err => {
@@ -43,8 +43,11 @@ export function setMetaDataForMp4(contentfulData: ContentData): Promise<any>[] {
 
       return s3.copyObject(params)
         .promise()
-        .then(data => {
+        .then(() => {
           console.log(`Metadata properly set for ${contentfulData.title}_${codec.type}.mp4`);
+        })
+        .catch(error => {
+          console.log(error);
         })
     })
 }
