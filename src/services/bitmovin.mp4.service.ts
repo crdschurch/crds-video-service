@@ -67,7 +67,7 @@ async function addMp4Muxing(encoding, encodingConfig, mp4VideoStreamConfig, mp4A
       }
     ],
     streamConditionsMode: "DROP_STREAM",
-    filename: `${contentData.title}_${mp4VideoStreamConfig.name}.mp4`
+    filename: `${contentData.videoId}_${mp4VideoStreamConfig.name}.mp4`
   }
 
   return await bitmovin.encoding.encodings(encoding.id).muxings.mp4.add(mp4muxing);
