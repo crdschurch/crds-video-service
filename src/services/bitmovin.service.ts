@@ -1,6 +1,5 @@
 import Bitmovin from "bitmovin-javascript";
 import { ContentData } from "../models/contentful-data.model";
-import { updateContentData } from "./contentful.service";
 import { startPerTitleEncoding } from "./bitmovin.perTitle.service";
 import { startStandardEncoding } from "./bitmovin.standard.service";
 
@@ -9,7 +8,7 @@ const bitmovin = Bitmovin({
   'apiKey': process.env.BITMOVIN_API_KEY
 });
 
-async function startEncoding(contentData: ContentData) {
+export async function createEncoding(contentData: ContentData) {
 
   const encodingConfig = {
     inputPath: contentData.videoUrl.replace(process.env.INPUT_FILE_HOST, ''),
@@ -25,9 +24,9 @@ async function startEncoding(contentData: ContentData) {
   });
 
   if (process.env.PER_TITLE === 'enabled') {
-    await startPerTitleEncoding(contentData, encodingConfig, encoding);
+    return await startPerTitleEncoding(contentData, encodingConfig, encoding);
   } else {
-    await startStandardEncoding(contentData, encodingConfig, encoding);
+    return await startStandardEncoding(contentData, encodingConfig, encoding);
   }
 }
 
@@ -37,27 +36,18 @@ async function startEncoding(contentData: ContentData) {
     2. If there is no encoding (and inherently no mp4) create a full encoding
     3. If the encoding doesn't have an mp4 download due to implementation timing add them
 */
-export async function createEncoding(contentData: ContentData) {
-  const encodings = await getAllEncodings();
-  const encoding = encodings.find(encoding => encoding.name === contentData.videoId);
-
-  if (encoding) {
-    if(encoding.status === "FINISHED"){
-      await updateContentData(contentData.id, contentData.videoId);
-      return `Encoding for ${contentData.videoId} already exists!`
-    } else if (encoding.status === "ERROR") {
-      return `Encoding for ${contentData.videoId} has encountered an error. Please contact production support!`;
-    } else {
-      return `Encoding for ${contentData.videoId} is still processing`;
+export async function needsEncoded(contentData: ContentData) {
+  if (contentData.videoId) {
+    const encoding = await getEncoding(contentData.videoId);
+    if (encoding && encoding.status === "ERROR"){
+      throw new Error(`Encoding for ${contentData.videoId} has encountered an error. Please contact production support!`);
+    } else if (encoding) {
+      return false;
     }
+    return true;
   } else {
-    if (contentData.videoId) {
-      await startEncoding(contentData)
-      await updateContentData(contentData.id, contentData.videoId);
-      return `New Encoding created for ${contentData.videoId}`;
-    } else {
-      return `Contentful record ${contentData.id} does not contain video_file`;
-    }
+    console.log(`No video on ${contentData.id}`);
+    throw new Error(`No video on ${contentData.id}`);
   }
 }
 
