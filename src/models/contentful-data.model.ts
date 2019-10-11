@@ -1,6 +1,7 @@
 import * as contentfulService from "../services/contentful.service";
 
 var stripchar = require('stripchar').StripChar;
+const uuidv1 = require('uuid/v1');
 
 export class ContentData {
   id: string;
@@ -10,6 +11,7 @@ export class ContentData {
   transcriptionUrl: string;
   transcriptionId: string;
   bitmovinUrl: string;
+  requestId: string;
   
   constructor(id: string, title: string, videoUrl: string, videoId: string, transcriptionUrl: string, transcriptionId: string, bitmovinUrl: string) {
     this.id = id;
@@ -19,6 +21,7 @@ export class ContentData {
     this.transcriptionUrl = transcriptionUrl;
     this.transcriptionId = transcriptionId;
     this.bitmovinUrl = bitmovinUrl;
+    this.requestId = uuidv1();
   };
 
   public static createContentfulDataArray(entries: any[]): Promise<ContentData>[] {

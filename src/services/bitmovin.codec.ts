@@ -7,6 +7,10 @@ export const videoCodecConfigurations = [
   '33241c7e-4cc8-4fa3-907c-14393c158324'  //Bitmovin HD H264 240 kbit/s 384px
 ];
 
+export const debugCodecConfigurations = [
+  '33241c7e-4cc8-4fa3-907c-14393c158324'  //Bitmovin HD H264 240 kbit/s 384px
+]
+
 export const audioCodecConfiguration = [
   '9d80ae8b-b9b0-41d2-b049-8729a83b8f26'
 ];
