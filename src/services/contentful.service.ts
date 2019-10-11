@@ -20,12 +20,13 @@ export function getAssetUrl(videoId: string): Promise<string> {
     .catch((ex) => { throw ex; });
 }
 
-export async function updateContentData(entryId, assetId) {
-  const bitmovinUrl = `${process.env.CLOUDFRONT_DOMAIN}bitmovin/${assetId}/manifest.m3u8`;
+export async function updateContentData(contentData: ContentData) {
+  const bitmovinUrl = `${process.env.CLOUDFRONT_DOMAIN}bitmovin/${contentData.videoId}/manifest.m3u8`;
 
+  console.log(`Attempting contentful update for Entry: ${contentData.id}\nRequestId: ${contentData.requestId}`);
   return managementClient.getSpace(process.env.CONTENTFUL_SPACE_ID)
     .then((space) => space.getEnvironment(process.env.CONTENTFUL_ENV))
-    .then((environment) => environment.getEntry(entryId))
+    .then((environment) => environment.getEntry(contentData.id))
     .then((entry) => {
       let entry_bitmovin_url: string = entry.fields.bitmovin_url ? entry.fields.bitmovin_url['en-US'] : '';
 
@@ -35,10 +36,10 @@ export async function updateContentData(entryId, assetId) {
         return entry.update()
           .then((entry) => {
             entry.publish();
-            console.log(`Entry ${entry.sys.id} bitmovin url updated to ${bitmovinUrl}`);
+            console.log(`Entry ${entry.sys.id} bitmovin url updated to ${bitmovinUrl} => RequestID: ${contentData.requestId}`);
           }).catch(console.error);
       } else {
-        console.log(`Bitmovin URL in entry already up to date`);
+        console.log(`Bitmovin URL in entry already up to date => RequestID: ${contentData.requestId}`);
       }
     }).catch(console.error);
 }

@@ -8,10 +8,17 @@ const router: Router = Router();
 router.post('/contentfulData', (req: Request, res: Response, next: NextFunction) => {
   ContentData.createContentfulDataFromJson(req.body)
     .then(contentfulData => {
-      BitmovinService.createEncoding(contentfulData)
-        .then((contentfulData) => {
-          return res.status(200).send(contentfulData);
+      BitmovinService.needsEncoded(contentfulData)
+        .then(async (needsEncoded) => {
+          if (needsEncoded) {
+            res.status(200).send({ data: contentfulData, message: `Creating Encoding`});
+            return await BitmovinService.createEncoding(contentfulData);
+          } else {
+            res.status(200).send({ data: contentfulData, message: `Encoding already exists`});
+            return;
+          }
         })
+        .then(() => ContentfulService.updateContentData(contentfulData))
         .catch((error) => {
           res.status(500).send(error.message);
           next(error);
