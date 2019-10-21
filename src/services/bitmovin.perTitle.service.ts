@@ -91,6 +91,8 @@ export async function startPerTitleEncoding(contentData: ContentData, encodingCo
 
   await Promise.all(await setMetaDataForMp4(contentData));
 
+  return encoding;
+
 }
 
 async function addAudioStreamToPerTitleEncoding(encoding, encodingConfig) {
