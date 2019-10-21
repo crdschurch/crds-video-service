@@ -15,10 +15,16 @@ router.post('/contentfulData', (req: Request, res: Response, next: NextFunction)
             return await BitmovinService.createEncoding(contentfulData);
           } else {
             res.status(200).send({ data: contentfulData, message: `Encoding already exists`});
-            return;
+            return await BitmovinService.getEncoding(contentfulData.videoId);
           }
         })
-        .then(() => ContentfulService.updateContentData(contentfulData))
+        .then(encoding => {
+          BitmovinService.getEncodingStreamDuration(encoding)
+            .then(duration => {
+              ContentfulService.updateContentData(contentfulData, duration)
+            })
+            .catch(err => console.error(err))
+        })
         .catch((error) => {
           res.status(500).send(error.message);
           next(error);
