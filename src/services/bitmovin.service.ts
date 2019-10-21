@@ -78,5 +78,6 @@ export async function getEncodingStreamDuration(encoding) {
     .inputDetails()
     .then((details: any) => {
       return details.duration;
-    });
+    })
+    .catch(err => console.error(err));
 }
