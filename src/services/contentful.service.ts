@@ -20,7 +20,7 @@ export function getAssetUrl(videoId: string): Promise<string> {
     .catch((ex) => { throw ex; });
 }
 
-export async function updateContentData(contentData: ContentData) {
+export async function updateContentData(contentData: ContentData, duration) {
   const bitmovinUrl = `${process.env.CLOUDFRONT_DOMAIN}bitmovin/${contentData.videoId}/manifest.m3u8`;
 
   console.log(`Attempting contentful update for Entry: ${contentData.id}\nRequestId: ${contentData.requestId}`);
@@ -33,6 +33,7 @@ export async function updateContentData(contentData: ContentData) {
       // If the entry already has a matching URL do not publish it or we get stuck in an infinite loop with Contentful
       if (!entry_bitmovin_url.match(bitmovinUrl)) {
         entry.fields.bitmovin_url = { 'en-US': bitmovinUrl };
+        entry.fields.duration = { 'en-US': Math.round(duration) };
         return entry.update()
           .then((entry) => {
             entry.publish();

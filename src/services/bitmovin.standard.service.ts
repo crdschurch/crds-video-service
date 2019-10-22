@@ -45,6 +45,8 @@ export async function startStandardEncoding(contentData: ContentData, encodingCo
   await BitmovinUtils.waitUntilHlsManifestFinished(manifest, bitmovin);
 
   await Promise.all(await setMetaDataForMp4(contentData));
+
+  return encoding;
 }
 
 async function createVideoStreamConfigs(encodingConfig, encoding) {

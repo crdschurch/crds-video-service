@@ -1,6 +1,7 @@
 import * as bitmovinService from "../services/bitmovin.service";
 import { Response, Request, Router } from "express";
 import { NextFunction } from "connect";
+import bodyParser from "body-parser"
 
 const router: Router = Router();
 
@@ -26,6 +27,15 @@ router.get('/getAllEncodingDurations', (req: Request, res: Response, next: NextF
       })).then(encodingDurations => res.send(encodingDurations))
     })
     .catch(err => next(err));
+})
+
+router.get('/getEncodingDuration', bodyParser.json(), (req: Request, res: Response, next: NextFunction) => {
+  bitmovinService.getEncoding(req.body.encodingName)
+    .then(encoding => {
+      return bitmovinService.getEncodingStreamDuration(encoding)
+    })
+    .then(duration => res.send({"duration": Math.round(duration)}))
+    .catch(err => console.error(err))
 })
 
 export const BitmovinController: Router = router;
