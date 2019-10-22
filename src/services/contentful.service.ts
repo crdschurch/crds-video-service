@@ -29,9 +29,10 @@ export async function updateContentData(contentData: ContentData, duration) {
     .then((environment) => environment.getEntry(contentData.id))
     .then((entry) => {
       let entry_bitmovin_url: string = entry.fields.bitmovin_url ? entry.fields.bitmovin_url['en-US'] : '';
+      let entry_duration: string = entry.fields.duration ? entry.fields.duration['en-US'] : '';
 
       // If the entry already has a matching URL do not publish it or we get stuck in an infinite loop with Contentful
-      if (!entry_bitmovin_url.match(bitmovinUrl)) {
+      if (!entry_bitmovin_url.match(bitmovinUrl) || !entry_duration.match(duration)) {
         entry.fields.bitmovin_url = { 'en-US': bitmovinUrl };
         entry.fields.duration = { 'en-US': Math.round(duration) };
         return entry.update()
