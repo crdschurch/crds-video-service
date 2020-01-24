@@ -52,7 +52,34 @@ export function getLatestMessage(): Promise<ContentData> {
     order: '-fields.published_at',
     limit: 1
   })
-  .then(entry => {
-    return ContentData.createContentfulDataFromJson(entry.items[0]);
+    .then(entry => {
+      return ContentData.createContentfulDataFromJson(entry.items[0]);
+    })
+}
+
+export function getMessageDetails(contentfulId) {
+  return client.getEntries({
+    links_to_asset: contentfulId
+  }).then(response => {
+    return buildResponse(response);
   })
+}
+
+function buildResponse(data) {
+  if (data.items.length == 0)
+    return "video not associated to message";
+
+  let messages;
+  if (data.items.length > 1) {
+    messages = data.items.map(item => {
+      return {
+        "id": item.sys.id
+      }
+    })
+  }
+  return {
+    "messageId": data.items[0].sys.id,
+    "title": data.items[0].fields.title,
+    "multipleMessages": messages ? messages : "no"
+  }
 }
