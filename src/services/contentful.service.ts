@@ -73,12 +73,16 @@ function buildResponse(data) {
   if (data.items.length > 1) {
     messages = data.items.map(item => {
       return {
-        "id": item.sys.id
+        "id": item.sys.id,
+        "title": item.fields.title,
+        "contentType": item.sys.contentType.sys.id
       }
     })
   }
+  console.log(data.items);
   return {
-    "messageId": data.items[0].sys.id,
+    "id": data.items[0].sys.id,
+    "contentType": data.items[0].sys.contentType.sys.id,
     "title": data.items[0].fields.title,
     "multipleMessages": messages ? messages : "no"
   }
