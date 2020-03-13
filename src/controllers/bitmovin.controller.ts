@@ -1,4 +1,5 @@
 import * as bitmovinService from "../services/bitmovin.service";
+import { getMessageDetails } from "../services/contentful.service";
 import { Response, Request, Router } from "express";
 import { NextFunction } from "connect";
 import bodyParser from "body-parser"
@@ -18,10 +19,11 @@ router.get('/getAllEncodingDurations', (req: Request, res: Response, next: NextF
     .then((encodings) => {
       Promise.all(encodings.map(encoding => {
         return bitmovinService.getEncodingStreamDuration(encoding)
-          .then(duration => {
+          .then(async duration => {
             return {
               "id": encoding.name,
-              "duration": duration
+              "duration": duration,
+              "messageDetails": await getMessageDetails(encoding.name)
             }
           }).catch(err => console.log(`The following error is most likely due to an encoding error => ${err.message}`))
       })).then(encodingDurations => res.send(encodingDurations))
@@ -34,7 +36,7 @@ router.get('/getEncodingDuration', bodyParser.json(), (req: Request, res: Respon
     .then(encoding => {
       return bitmovinService.getEncodingStreamDuration(encoding)
     })
-    .then(duration => res.send({"duration": Math.round(duration)}))
+    .then(duration => res.send({ "duration": Math.round(duration) }))
     .catch(err => console.error(err))
 })
 
