@@ -56,7 +56,7 @@ export function getAllEncodings(encodings: any[] = [], offset: number = 0): Prom
     .then(result => {
       const { items } = result;
       encodings = [...encodings, ...items];
-      if (items.length !== 2) return encodings;
+      if (items.length !== 100) return encodings;
       return getAllEncodings(encodings, offset + 100);
     });
 }
