@@ -21,7 +21,7 @@ router.get('/getAllEncodingDurations', (req: Request, res: Response, next: NextF
         return bitmovinService.getEncodingStreamDuration(encoding)
           .then(async duration => {
             return {
-              "id": encoding.name,
+              "bitmovinEncodingId": encoding.name,
               "duration": duration,
               "messageDetails": await getMessageDetails(encoding.name)
             }

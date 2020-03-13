@@ -73,17 +73,19 @@ function buildResponse(data) {
   if (data.items.length > 1) {
     messages = data.items.map(item => {
       return {
-        "id": item.sys.id,
+        "duplicateMessageId": item.sys.id,
         "title": item.fields.title,
-        "contentType": item.sys.contentType.sys.id
+        "contentType": item.sys.contentType.sys.id,
+        "publishedAt": item.fields.published_at
       }
     })
   }
   console.log(data.items);
   return {
-    "id": data.items[0].sys.id,
+    "messageId": data.items[0].sys.id,
     "contentType": data.items[0].sys.contentType.sys.id,
     "title": data.items[0].fields.title,
+    "publishedAt": data.items[0].fields.published_at,
     "multipleMessages": messages ? messages : "no"
   }
 }
