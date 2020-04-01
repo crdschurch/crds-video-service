@@ -32,12 +32,13 @@ export async function updateContentData(contentData: ContentData, duration) {
       let entry_duration: string = entry.fields.duration ? entry.fields.duration['en-US'] : '';
 
       // If the entry already has a matching URL do not publish it or we get stuck in an infinite loop with Contentful
+      // TODO: now that we've changed to .update() some of this logic can go including the above comment ^^^
       if (!entry_bitmovin_url.match(bitmovinUrl) || !entry_duration.match(duration)) {
         entry.fields.bitmovin_url = { 'en-US': bitmovinUrl };
         entry.fields.duration = { 'en-US': Math.round(duration) };
         return entry.update()
           .then((entry) => {
-            entry.publish();
+            entry.update();
             console.log(`Entry ${entry.sys.id} bitmovin url updated to ${bitmovinUrl} => RequestID: ${contentData.requestId}`);
           }).catch(console.error);
       } else {
