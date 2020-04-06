@@ -56,7 +56,6 @@ function logError(err, req: express.Request, res: express.Response, next: expres
                     Contentful Entry Title: ${err.message.title}
                     Contentful Entry ID : ${err.message.id}
                     Contentful Entry Video ID: ${err.message.videoId}
-                    Contentful Entry Transcription ID: ${err.message.transcriptionId}
                     Contentful Entry Bitmovin URL: ${err.message.bitmovinUrl}
                     Bitmovin Encoding: ${encodingMessage}
                     Bitmovin Manifest: ${manifestMessage}`
