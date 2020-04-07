@@ -8,18 +8,14 @@ export class ContentData {
   title: string;
   videoUrl: string;
   videoId: string;
-  transcriptionUrl: string;
-  transcriptionId: string;
   bitmovinUrl: string;
   requestId: string;
   
-  constructor(id: string, title: string, videoUrl: string, videoId: string, transcriptionUrl: string, transcriptionId: string, bitmovinUrl: string) {
+  constructor(id: string, title: string, videoUrl: string, videoId: string, bitmovinUrl: string) {
     this.id = id;
     this.title = title;
     this.videoUrl = videoUrl;
     this.videoId = videoId;
-    this.transcriptionUrl = transcriptionUrl;
-    this.transcriptionId = transcriptionId;
     this.bitmovinUrl = bitmovinUrl;
     this.requestId = uuidv1();
   };
@@ -32,11 +28,9 @@ export class ContentData {
 
   public static async createContentfulDataFromJson({ sys, fields }): Promise<ContentData> {
     const { id } = sys;
-    const { title, video_file, transcription, bitmovin_url } = fields;
+    const { title, video_file, bitmovin_url } = fields;
     let videoUrl = '';
     let videoFileId = '';
-    let transcriptionUrl = '';
-    let transcriptionId = '';
     let recordTitle = stripchar.RSspecChar(title["en-US"] ? title["en-US"] : title);
 
     if (video_file) {
@@ -44,11 +38,6 @@ export class ContentData {
       videoUrl = video_file.fields ? video_file.fields.file.url : await contentfulService.getAssetUrl(videoFileId);
     }
 
-    if (transcription) {
-      transcriptionId = transcription.sys ? transcription.sys.id : transcription["en-US"].sys.id;
-      transcriptionUrl = transcription.sys ? transcription.fields.file.url : await contentfulService.getAssetUrl(transcriptionId);
-    }
-
-    return new ContentData(id, recordTitle, videoUrl, videoFileId, transcriptionUrl, transcriptionId, bitmovin_url);
+    return new ContentData(id, recordTitle, videoUrl, videoFileId, bitmovin_url);
   }
 }
