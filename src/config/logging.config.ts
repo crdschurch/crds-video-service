@@ -16,7 +16,7 @@ function log(req: express.Request, res: express.Response, next: express.NextFunc
 
   if (res.statusCode >= 400)
     log.level = 'error';
-  else if (res.statusCode = 299)
+  else if (res.statusCode == 299)
     log.level = 'warn';
   else
     log.level = 'info';
@@ -76,7 +76,7 @@ function logResponseBody(req, res, next) {
   var log = {
     application: 'crds-video-service',
     environment: process.env.CRDS_ENV,
-    level: res.statusCode = 299 ? 'warn' : 'info',
+    level: res.statusCode == 299 ? 'warn' : 'info',
     message: ''
   };
 
