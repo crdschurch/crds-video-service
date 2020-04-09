@@ -8,6 +8,11 @@ const router: Router = Router();
 router.post('/contentfulData', (req: Request, res: Response, next: NextFunction) => {
   ContentData.createContentfulDataFromJson(req.body)
     .then(contentfulData => {
+      if(!contentfulData.videoId) {
+        res.status(299).send(`No video on ${contentfulData.id}`); // 299 = misc warning
+        console.log(`No video on ${contentfulData.id}`);
+        return;
+      }
       BitmovinService.needsEncoded(contentfulData)
         .then(async (needsEncoded) => {
           if (needsEncoded) {
@@ -23,7 +28,9 @@ router.post('/contentfulData', (req: Request, res: Response, next: NextFunction)
             .then(duration => {
               ContentfulService.updateContentData(contentfulData, duration)
             })
-            .catch(err => console.error(err))
+            .catch(err => {
+              console.error(err)
+            })
         })
         .catch((error) => {
           res.status(500).send(error.message);
