@@ -8,10 +8,10 @@ const router: Router = Router();
 router.post('/contentfulData', (req: Request, res: Response, next: NextFunction) => {
   ContentData.createContentfulDataFromJson(req.body)
     .then(contentfulData => {
-      if(!contentfulData.videoId) {
-        res.status(299).send(`No video on ${contentfulData.id}`); // 299 = misc warning
-        console.log(`No video on ${contentfulData.id}`);
-        return;
+      if(contentfulData.invalidVideo){
+        let invalidReason = ContentData.getInvalidVideoReason(contentfulData);
+        res.status(299).send(invalidReason);
+        console.log(invalidReason);
       }
       BitmovinService.needsEncoded(contentfulData)
         .then(async (needsEncoded) => {
