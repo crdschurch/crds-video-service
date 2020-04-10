@@ -32,23 +32,18 @@ export async function createEncoding(contentData: ContentData) {
 
 /*
   flow:
-    1. If there is already an encoding with downloads, simply write back to Contentful
-    2. If there is no encoding (and inherently no mp4) create a full encoding
+    1. If there is already an encoding with downloads, write bitmovin_url back to Contentful record
+    2. If there is no encoding create a full encoding
     3. If the encoding doesn't have an mp4 download due to implementation timing add them
 */
-export async function needsEncoded(contentData: ContentData) {
-  if (contentData.videoId) {
-    const encoding = await getEncoding(contentData.videoId);
-    if (encoding && encoding.status === "ERROR"){
-      throw new Error(`Encoding for ${contentData.videoId} has encountered an error. Please contact production support!`);
-    } else if (encoding) {
-      return false;
-    }
-    return true;
-  } else {
-    console.log(`No video on ${contentData.id}`);
-    throw new Error(`No video on ${contentData.id}`);
+export async function needsEncoded(contentData: ContentData): Promise<boolean> {
+  const encoding = await getEncoding(contentData.videoId);
+  if (encoding && encoding.status === "ERROR"){
+    throw new Error(`Encoding for ${contentData.videoId} has encountered an error. Please contact production support!`);
+  } else if (encoding) {
+    return false;
   }
+  return true;
 }
 
 export function getAllEncodings(encodings: any[] = [], offset: number = 0): Promise<any[]> {

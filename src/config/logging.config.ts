@@ -16,6 +16,8 @@ function log(req: express.Request, res: express.Response, next: express.NextFunc
 
   if (res.statusCode >= 400)
     log.level = 'error';
+  else if (res.statusCode == 299)
+    log.level = 'warn';
   else
     log.level = 'info';
 
@@ -56,7 +58,6 @@ function logError(err, req: express.Request, res: express.Response, next: expres
                     Contentful Entry Title: ${err.message.title}
                     Contentful Entry ID : ${err.message.id}
                     Contentful Entry Video ID: ${err.message.videoId}
-                    Contentful Entry Transcription ID: ${err.message.transcriptionId}
                     Contentful Entry Bitmovin URL: ${err.message.bitmovinUrl}
                     Bitmovin Encoding: ${encodingMessage}
                     Bitmovin Manifest: ${manifestMessage}`
@@ -74,7 +75,7 @@ function logResponseBody(req, res, next) {
   var log = {
     application: 'crds-video-service',
     environment: process.env.CRDS_ENV,
-    level: 'info',
+    level: res.statusCode == 299 ? 'warn' : 'info',
     message: ''
   };
 
