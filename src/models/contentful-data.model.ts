@@ -9,8 +9,6 @@ export class ContentData {
   title: string;
   videoUrl: string;
   videoId: string;
-  transcriptionUrl: string;
-  transcriptionId: string;
   bitmovinUrl: string;
   requestId: string;
   invalidVideo: boolean;
@@ -33,7 +31,7 @@ export class ContentData {
 
   public static async createContentfulDataFromJson({ sys, fields }): Promise<ContentData> {
     const { id } = sys;
-    const { title, video_file, transcription, bitmovin_url } = fields;
+    const { title, video_file, bitmovin_url } = fields;
     let videoUrl = '';
     let videoFileId = '';
     let invalidVideo = true;
