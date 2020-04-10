@@ -17,7 +17,9 @@ export function getAssetUrl(videoId: string): Promise<string> {
     .then(asset => {
       return asset.fields.file.url;
     })
-    .catch((ex) => { throw ex; });
+    .catch((err) => { 
+      return null;
+    });
 }
 
 export async function updateContentData(contentData: ContentData, duration) {
