@@ -24,7 +24,8 @@ export async function startPerTitleEncoding(contentData: ContentData, encodingCo
 
   const startRequest = {
     encodingMode: process.env.PER_TITLE_MODE,
-    perTitle: perTitle
+    perTitle: perTitle,
+    handleVariableInputFps: false
   };
 
   const videoCodecConfig = {
