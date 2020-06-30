@@ -1,5 +1,4 @@
 import * as contentfulService from "../services/contentful.service";
-import { Content } from "aws-sdk/clients/codecommit";
 
 var stripchar = require('stripchar').StripChar;
 const uuidv1 = require('uuid/v1');

@@ -65,6 +65,9 @@ export function getMessageDetails(contentfulId) {
     links_to_asset: contentfulId
   }).then(response => {
     return buildResponse(response);
+  }).catch(err => {
+    if(err.response.status === 400) return "Asset not found";
+    console.error(`getMessageDetails error => ${err}`)
   })
 }
 
@@ -83,7 +86,6 @@ function buildResponse(data) {
       }
     })
   }
-  console.log(data.items);
   return {
     "messageId": data.items[0].sys.id,
     "contentType": data.items[0].sys.contentType.sys.id,
