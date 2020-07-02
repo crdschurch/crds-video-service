@@ -66,6 +66,10 @@ export function getMessageDetails(contentfulId) {
   }).then(response => {
     return buildResponse(response);
   }).catch(err => {
+    if(err.response.status === 429) {
+      console.log(`Rate limit hit for: ${contentfulId}. Trying again.`);
+      return getMessageDetails(contentfulId);
+    }
     if(err.response.status === 400) return "Asset not found";
     console.error(`getMessageDetails error => ${err}`)
   })
