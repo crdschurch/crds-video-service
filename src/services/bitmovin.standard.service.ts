@@ -132,9 +132,10 @@ async function createAudioManifest(audioMuxingConfigs, encoding, manifest) {
         encodingId: encoding.id,
         streamId: audioMuxingConfig.streams[0].streamId,
         muxingId: audioMuxingConfig.id,
-        language: 'en'
+        language: 'en',
+        autoselect: true,
+        isDefault: true
       }
-
       return bitmovin.encoding.manifests.hls(manifest.id).media.audio.add(audioMedia);
     })
 }

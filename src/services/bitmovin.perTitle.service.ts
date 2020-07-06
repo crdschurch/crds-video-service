@@ -181,7 +181,9 @@ async function createPerTitleAudioManifest(audioMuxings, encoding, manifest, roo
         encodingId: encoding.id,
         streamId: audioMuxing.streams[0].streamId,
         muxingId: audioMuxing.id,
-        language: 'en'
+        language: 'en',
+        autoselect: true,
+        isDefault: true
       }
 
       return bitmovin.encoding.manifests.hls(manifest.id).media.audio.add(audioMedia);
