@@ -60,28 +60,29 @@ export function getLatestMessage(): Promise<ContentData> {
     })
 }
 
-export function getMessageDetails(contentfulId) {
+export function getAllMessages(messages: any[] = [], offset: number = 0) {
   return client.getEntries({
-    links_to_asset: contentfulId
+    content_type: "message",
+    limit: 1000,
+    skip: offset,
+    'fields.bitmovin_url[exists]': true
   }).then(response => {
-    return buildResponse(response);
+    const { items } = response;
+    messages = [...messages, ...items]
+    if(response.items.length !== 1000) return messages;
+    return getAllMessages(messages, offset + 1000);
   }).catch(err => {
-    if(err.response.status === 429) {
-      console.log(`Rate limit hit for: ${contentfulId}. Trying again.`);
-      return getMessageDetails(contentfulId);
-    }
-    if(err.response.status === 400) return "Asset not found";
-    console.error(`getMessageDetails error => ${err}`)
+    console.log(err);
   })
 }
 
-function buildResponse(data) {
-  if (data.items.length == 0)
+export function buildResponse(data) {
+  if (data.length == 0)
     return "video not associated to message";
 
   let messages;
-  if (data.items.length > 1) {
-    messages = data.items.map(item => {
+  if (data.length > 1) {
+    messages = data.map(item => {
       return {
         "duplicateMessageId": item.sys.id,
         "title": item.fields.title,
@@ -91,10 +92,10 @@ function buildResponse(data) {
     })
   }
   return {
-    "messageId": data.items[0].sys.id,
-    "contentType": data.items[0].sys.contentType.sys.id,
-    "title": data.items[0].fields.title,
-    "publishedAt": data.items[0].fields.published_at,
+    "messageId": data[0].sys.id,
+    "contentType": data[0].sys.contentType.sys.id,
+    "title": data[0].fields.title,
+    "publishedAt": data[0].fields.published_at,
     "multipleMessages": messages ? messages : "no"
   }
 }
