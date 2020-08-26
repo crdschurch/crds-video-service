@@ -1,5 +1,5 @@
 import * as bitmovinService from "../services/bitmovin.service";
-import { getMessageDetails } from "../services/contentful.service";
+import { getAllMessages, buildResponse } from "../services/contentful.service";
 import { Response, Request, Router } from "express";
 import { NextFunction } from "connect";
 import bodyParser from "body-parser"
@@ -17,16 +17,20 @@ router.get('/listEncodings', (req: Request, res: Response, next: NextFunction) =
 router.get('/getAllEncodingDurations', (req: Request, res: Response, next: NextFunction) => {
   bitmovinService.getAllEncodings()
     .then((encodings) => {
-      Promise.all(encodings.map(encoding => {
-        return bitmovinService.getEncodingStreamDuration(encoding)
-          .then(async duration => {
-            return {
-              "bitmovinEncodingId": encoding.name,
-              "duration": duration,
-              "messageDetails": await getMessageDetails(encoding.name)
-            }
-          }).catch(err => console.log(`The following error is most likely due to an encoding error => ${err.message}`))
-      })).then(encodingDurations => res.send(encodingDurations))
+      getAllMessages().then(messages => {
+        Promise.all(encodings.map(encoding => {
+          let encodingMessage = messages.filter(message => message.fields.bitmovin_url.includes(encoding.name));
+          return bitmovinService.getEncodingStreamDuration(encoding)
+            .then(async duration => {
+              return {
+                "bitmovinEncodingId": encoding.name,
+                "duration": duration,
+                "messageDetails": buildResponse(encodingMessage)
+              }
+            }).catch(err => console.log(`The following error is most likely due to an encoding error => ${err.message}`))
+        })).then(encodingDurations => res.send(encodingDurations))
+      });
+      
     })
     .catch(err => next(err));
 })
