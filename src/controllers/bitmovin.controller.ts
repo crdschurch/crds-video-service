@@ -30,7 +30,6 @@ router.get(
               let encodingMessage = messages.filter((message) =>
                 message.fields.bitmovin_url.includes(encoding.name)
               );
-              encodingMessage["createdAt"] = encoding.createdAt;
               return bitmovinService
                 .getEncodingStreamDuration(encoding)
                 .then(async (duration) => {
@@ -38,6 +37,7 @@ router.get(
                     bitmovinEncodingId: encoding.name,
                     duration: duration,
                     messageDetails: buildResponse(encodingMessage),
+                    createdAt: encoding.createdAt
                   };
                 })
                 .catch((err) =>
