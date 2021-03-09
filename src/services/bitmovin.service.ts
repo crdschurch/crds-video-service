@@ -4,6 +4,7 @@ import { startPerTitleEncoding } from "./bitmovin.perTitle.service";
 import { startStandardEncoding } from "./bitmovin.standard.service";
 import moment from 'moment';
 import _ from 'lodash';
+import { Z_FILTERED } from "zlib";
 
 // TODO: abstract bitmovin client for the multiple services
 const bitmovin = Bitmovin({
@@ -52,7 +53,7 @@ export function getAllEncodings(): Promise<any[]> {
   return getAllEncodingsFromBitmovin().
     then(result => {
       let sortedEncodings = _.reverse(result);
-      let uniqEncodings = _.uniqBy(sortedEncodings, (o: any) => o.id);
+      let uniqEncodings = _.uniqBy(sortedEncodings, (o: any) => o.name);
       return uniqEncodings;
     });
 }
