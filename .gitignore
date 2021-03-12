@@ -59,6 +59,7 @@ typings/
 
 # direnv environment varibles file
 .envrc
+*/**/.env
 
 # next.js build output
 .next

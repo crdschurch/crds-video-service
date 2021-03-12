@@ -2,6 +2,8 @@ import Bitmovin from "bitmovin-javascript";
 import { ContentData } from "../models/contentful-data.model";
 import { startPerTitleEncoding } from "./bitmovin.perTitle.service";
 import { startStandardEncoding } from "./bitmovin.standard.service";
+import moment from 'moment';
+import _ from 'lodash';
 
 // TODO: abstract bitmovin client for the multiple services
 const bitmovin = Bitmovin({
@@ -46,15 +48,24 @@ export async function needsEncoded(contentData: ContentData): Promise<boolean> {
   return true;
 }
 
-export function getAllEncodings(encodings: any[] = [], offset: number = 0): Promise<any[]> {
-  return bitmovin.encoding.encodings.list(100, offset)
+export function getAllEncodings(): Promise<any[]> {
+  return getAllEncodingsFromBitmovin().
+    then(result => {
+      let sortedEncodings = _.reverse(result);
+      let uniqEncodings = _.uniqBy(sortedEncodings, (o: any) => o.name);
+      return uniqEncodings;
+    });
+}
+
+function getAllEncodingsFromBitmovin(encodings: any[] = [], offset: number = 0): Promise<any[]> {
+  return bitmovin.encoding.encodings.list(100, offset, 'createdAt')
     .then(result => {
       const { items } = result;
       encodings = [...encodings, ...items];
       if (items.length !== 100) return encodings;
-      return getAllEncodings(encodings, offset + 100);
+      return getAllEncodingsFromBitmovin(encodings, offset + 100);
     });
-}
+  }
 
 export async function getEncoding(encodingName: string) {
   const encodings = await getAllEncodings();
