@@ -65,7 +65,9 @@ function logError(err, req: express.Request, res: express.Response, next: expres
 
   logger.log(log);
 
-  newrelic.noticeError("errorMessage", log);
+  if (!process.env.CRDS_ENV.match('local')) {
+    newrelic.noticeError("errorMessage", log);
+  }
 
   next();
 }
