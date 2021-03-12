@@ -52,7 +52,7 @@ export function getAllEncodings(): Promise<any[]> {
   return getAllEncodingsFromBitmovin().
     then(result => {
       let sortedEncodings = _.reverse(result);
-      let uniqEncodings = _.uniqBy(sortedEncodings, (o: any) => o.id);
+      let uniqEncodings = _.uniqBy(sortedEncodings, (o: any) => o.name);
       return uniqEncodings;
     });
 }
